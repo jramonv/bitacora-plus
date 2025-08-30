@@ -11,7 +11,7 @@ import { Link } from "react-router-dom";
 import Layout from "@/components/Layout";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { TaskStatus, SubjectStatus, castAIFlags } from "@/types/database";
+import { TaskStatus, SubjectStatus, SubjectType, castAIFlags } from "@/types/database";
 import { useToast } from "@/hooks/use-toast";
 
 const SubjectDetail = () => {
@@ -93,6 +93,18 @@ const SubjectDetail = () => {
     
     const config = variants[status as keyof typeof variants] || variants.draft;
     return <Badge variant={config.variant}>{config.label}</Badge>;
+  };
+
+  const getTypeBadge = (type: SubjectType) => {
+    const labels: Record<SubjectType, string> = {
+      project: 'Proyecto',
+      research: 'Investigación',
+      maintenance: 'Mantenimiento',
+      health: 'Salud',
+      education: 'Educación',
+      personal: 'Personal'
+    };
+    return <Badge variant="outline">{labels[type]}</Badge>;
   };
 
   const getComplianceChips = (task: any) => {
@@ -200,6 +212,7 @@ const SubjectDetail = () => {
             <div className="flex items-center space-x-4 mb-2">
               <h1 className="text-3xl font-bold">{subject.title}</h1>
               {getStatusBadge(subject.status)}
+              {getTypeBadge(subject.subject_type)}
             </div>
             {subject.description && (
               <p className="text-muted-foreground">{subject.description}</p>

@@ -15,17 +15,18 @@ import Layout from "@/components/Layout";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { cn } from "@/lib/utils";
-import { SubjectStatus } from "@/types/database";
+import { SubjectStatus, SubjectType } from "@/types/database";
 
 const SubjectsList = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | SubjectStatus>("all");
+  const [typeFilter, setTypeFilter] = useState<"all" | SubjectType>("all");
   const [dateFrom, setDateFrom] = useState<Date>();
   const [dateTo, setDateTo] = useState<Date>();
 
   // Fetch subjects with filters
   const { data: subjects, isLoading } = useQuery({
-    queryKey: ['subjects', searchTerm, statusFilter, dateFrom, dateTo],
+    queryKey: ['subjects', searchTerm, statusFilter, typeFilter, dateFrom, dateTo],
     queryFn: async () => {
       let query = supabase
         .from('subjects')
@@ -34,6 +35,7 @@ const SubjectsList = () => {
           title,
           description,
           status,
+          subject_type,
           due_date,
           closed_at,
           created_at,
@@ -51,6 +53,10 @@ const SubjectsList = () => {
 
       if (statusFilter !== 'all') {
         query = query.eq('status', statusFilter);
+      }
+
+      if (typeFilter !== 'all') {
+        query = query.eq('subject_type', typeFilter);
       }
 
       if (dateFrom) {
@@ -74,9 +80,21 @@ const SubjectsList = () => {
       'closed': { variant: 'secondary' as const, label: 'Cerrado' },
       'cancelled': { variant: 'destructive' as const, label: 'Cancelado' }
     };
-    
+
     const config = variants[status as keyof typeof variants] || variants.draft;
     return <Badge variant={config.variant}>{config.label}</Badge>;
+  };
+
+  const getTypeBadge = (type: SubjectType) => {
+    const labels: Record<SubjectType, string> = {
+      project: 'Proyecto',
+      research: 'Investigación',
+      maintenance: 'Mantenimiento',
+      health: 'Salud',
+      education: 'Educación',
+      personal: 'Personal'
+    };
+    return <Badge variant="outline">{labels[type]}</Badge>;
   };
 
   const getTasksStats = (tasks: any[]) => {
@@ -118,7 +136,7 @@ const SubjectsList = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
               {/* Search */}
               <div className="relative">
                 <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -141,6 +159,22 @@ const SubjectsList = () => {
                   <SelectItem value="active">Activo</SelectItem>
                   <SelectItem value="closed">Cerrado</SelectItem>
                   <SelectItem value="cancelled">Cancelado</SelectItem>
+                </SelectContent>
+              </Select>
+
+              {/* Type Filter */}
+              <Select value={typeFilter} onValueChange={(value) => setTypeFilter(value as "all" | SubjectType)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Tipo" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos los tipos</SelectItem>
+                  <SelectItem value="project">Proyecto</SelectItem>
+                  <SelectItem value="research">Investigación</SelectItem>
+                  <SelectItem value="maintenance">Mantenimiento</SelectItem>
+                  <SelectItem value="health">Salud</SelectItem>
+                  <SelectItem value="education">Educación</SelectItem>
+                  <SelectItem value="personal">Personal</SelectItem>
                 </SelectContent>
               </Select>
 
@@ -210,6 +244,7 @@ const SubjectsList = () => {
                 <TableHeader>
                   <TableRow>
                     <TableHead>OT</TableHead>
+                    <TableHead>Tipo</TableHead>
                     <TableHead>Estado</TableHead>
                     <TableHead>Vencimiento</TableHead>
                     <TableHead>Tasks</TableHead>
@@ -220,7 +255,7 @@ const SubjectsList = () => {
                 <TableBody>
                   {!subjects || subjects.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                      <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                         No se encontraron órdenes de trabajo
                       </TableCell>
                     </TableRow>
@@ -243,6 +278,7 @@ const SubjectsList = () => {
                               )}
                             </div>
                           </TableCell>
+                          <TableCell>{getTypeBadge(subject.subject_type)}</TableCell>
                           <TableCell>{getStatusBadge(subject.status)}</TableCell>
                           <TableCell>
                             {subject.due_date ? (

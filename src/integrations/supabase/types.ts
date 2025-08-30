@@ -695,6 +695,7 @@ export type Database = {
           due_date: string | null
           id: string
           status: Database["public"]["Enums"]["subject_status"]
+          subject_type: Database["public"]["Enums"]["subject_type"]
           tenant_id: string
           title: string
           updated_at: string | null
@@ -709,6 +710,7 @@ export type Database = {
           due_date?: string | null
           id?: string
           status?: Database["public"]["Enums"]["subject_status"]
+          subject_type?: Database["public"]["Enums"]["subject_type"]
           tenant_id: string
           title: string
           updated_at?: string | null
@@ -723,6 +725,7 @@ export type Database = {
           due_date?: string | null
           id?: string
           status?: Database["public"]["Enums"]["subject_status"]
+          subject_type?: Database["public"]["Enums"]["subject_type"]
           tenant_id?: string
           title?: string
           updated_at?: string | null
@@ -1026,6 +1029,13 @@ export type Database = {
       ai_output_type: "normalized_log" | "ocr" | "risk" | "summary" | "tags"
       evidence_kind: "photo" | "pdf"
       subject_status: "draft" | "active" | "closed" | "cancelled"
+      subject_type:
+        | "project"
+        | "research"
+        | "maintenance"
+        | "health"
+        | "education"
+        | "personal"
       task_status: "pending" | "in_progress" | "completed" | "blocked"
       user_role: "owner" | "editor" | "viewer"
     }
@@ -1166,6 +1176,14 @@ export const Constants = {
       ai_output_type: ["normalized_log", "ocr", "risk", "summary", "tags"],
       evidence_kind: ["photo", "pdf"],
       subject_status: ["draft", "active", "closed", "cancelled"],
+      subject_type: [
+        "project",
+        "research",
+        "maintenance",
+        "health",
+        "education",
+        "personal",
+      ],
       task_status: ["pending", "in_progress", "completed", "blocked"],
       user_role: ["owner", "editor", "viewer"],
     },

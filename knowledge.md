@@ -3,6 +3,8 @@
 
 **Entities:** Tenant, User(role: owner|editor|viewer), Subject(OT/Project), Task, Evidence(kind: photo|pdf, checksum, lat/lon), LogEntry, ChecklistTemplate, ChecklistRun.
 
+**Subject types:** project | research | maintenance | health | education | personal.
+
 **Business rules (blocking close):**
 - min_photos (>=3), geotag_required(true), signature_required(true), checklist_id(optional).
 - On close: status='closed', closed_at=now(), log event 'status_change'.

@@ -45,6 +45,13 @@ export interface LogMetadata {
 // Task status types
 export type TaskStatus = "pending" | "in_progress" | "completed" | "blocked";
 export type SubjectStatus = "draft" | "active" | "closed" | "cancelled";
+export type SubjectType =
+  | "project"
+  | "research"
+  | "maintenance"
+  | "health"
+  | "education"
+  | "personal";
 export type UserRole = "owner" | "editor" | "viewer";
 export type EvidenceKind = "photo" | "pdf";
 
