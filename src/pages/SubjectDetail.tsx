@@ -95,7 +95,7 @@ const SubjectDetail = () => {
     return <Badge variant={config.variant}>{config.label}</Badge>;
   };
 
-  const getComplianceChips = (task: any) => {
+  const getComplianceChips = (task: { ai_flags: unknown }) => {
     const flags = castAIFlags(task.ai_flags);
     const chips = [];
     
@@ -224,10 +224,12 @@ const SubjectDetail = () => {
               <Download className="mr-2 h-4 w-4" />
               Exportar PDF
             </Button>
-            <Button>
-              <Plus className="mr-2 h-4 w-4" />
-              Nueva Task
-            </Button>
+            <Link to={`/tasks/new?subjectId=${id}`}>
+              <Button>
+                <Plus className="mr-2 h-4 w-4" />
+                Nueva Task
+              </Button>
+            </Link>
           </div>
         </div>
 
