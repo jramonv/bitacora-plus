@@ -19,6 +19,7 @@ import { es } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
 import { TaskStatus, RequiredEvidence, castRequiredEvidence } from "@/types/database";
 import { EvidenceUpload } from "@/components/EvidenceUpload";
+import { Helmet } from "@/components/Helmet";
 
 const TaskDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -79,6 +80,9 @@ const TaskDetail = () => {
     },
     enabled: !!id
   });
+
+  const pageTitle = task ? `${task.title} - Bitácora` : "Detalle de Task - Bitácora";
+  const pageDescription = task?.description || "Información detallada de la task";
 
   // Update task mutation
   const updateTaskMutation = useMutation({
@@ -305,6 +309,7 @@ const TaskDetail = () => {
   if (isLoading) {
     return (
       <Layout>
+        <Helmet title="Cargando task - Bitácora" description="Cargando detalles de la task" />
         <div className="flex items-center justify-center py-8">
           <Clock className="mr-2 h-4 w-4 animate-spin" />
           Cargando detalles de la task...
@@ -316,6 +321,7 @@ const TaskDetail = () => {
   if (!task) {
     return (
       <Layout>
+        <Helmet title="Task no encontrada - Bitácora" description="No se encontró la task solicitada" />
         <div className="text-center py-8">
           <p className="text-muted-foreground">Task no encontrada</p>
         </div>
@@ -331,6 +337,7 @@ const TaskDetail = () => {
 
   return (
     <Layout>
+      <Helmet title={pageTitle} description={pageDescription} />
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">

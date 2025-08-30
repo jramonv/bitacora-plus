@@ -10,6 +10,7 @@ import Layout from "@/components/Layout";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { TaskStatus, castAIFlags } from "@/types/database";
+import { Helmet } from "@/components/Helmet";
 
 const Dashboard = () => {
   // Fetch KPI data
@@ -91,6 +92,7 @@ const Dashboard = () => {
 
   return (
     <Layout>
+      <Helmet title="Dashboard - Bitácora" description="Resumen operativo y KPIs de cumplimiento" />
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">

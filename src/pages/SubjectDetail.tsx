@@ -13,6 +13,7 @@ import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { TaskStatus, SubjectStatus, castAIFlags } from "@/types/database";
 import { useToast } from "@/hooks/use-toast";
+import { Helmet } from "@/components/Helmet";
 
 const SubjectDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -52,6 +53,9 @@ const SubjectDetail = () => {
     },
     enabled: !!id
   });
+
+  const pageTitle = subject ? `${subject.title} - Bitácora` : "Detalle OT - Bitácora";
+  const pageDescription = subject?.description || "Información detallada de la orden de trabajo";
 
   // Fetch evidence for this subject
   const { data: evidence } = useQuery({
@@ -173,6 +177,7 @@ const SubjectDetail = () => {
   if (isLoading) {
     return (
       <Layout>
+        <Helmet title="Cargando OT - Bitácora" description="Cargando detalles de la orden de trabajo" />
         <div className="flex items-center justify-center py-8">
           <Clock className="mr-2 h-4 w-4 animate-spin" />
           Cargando detalles de la OT...
@@ -184,6 +189,7 @@ const SubjectDetail = () => {
   if (!subject) {
     return (
       <Layout>
+        <Helmet title="OT no encontrada - Bitácora" description="No se encontró la orden de trabajo solicitada" />
         <div className="text-center py-8">
           <p className="text-muted-foreground">OT no encontrada</p>
         </div>
@@ -193,6 +199,7 @@ const SubjectDetail = () => {
 
   return (
     <Layout>
+      <Helmet title={pageTitle} description={pageDescription} />
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
