@@ -209,11 +209,15 @@ const Dashboard = () => {
                               {task.title}
                             </Link>
                           </TableCell>
-                          <TableCell>
-                            <Link to={`/subjects/${task.subjects.id}`} className="hover:underline text-primary">
-                              {task.subjects.title}
-                            </Link>
-                          </TableCell>
+                            <TableCell>
+                              {task.subjects ? (
+                                <Link to={`/subjects/${task.subjects.id}`} className="hover:underline text-primary">
+                                  {task.subjects.title}
+                                </Link>
+                              ) : (
+                                "Sin OT"
+                              )}
+                            </TableCell>
                           <TableCell>{getStatusBadge(task.status)}</TableCell>
                           <TableCell>
                             {task.due_date ? format(new Date(task.due_date), 'dd/MM/yyyy', { locale: es }) : 'Sin fecha'}
