@@ -1,73 +1,59 @@
-# Welcome to your Lovable project
+# Bitácora Plus
 
-## Project info
+Bitácora Plus es una plataforma para llevar el registro operativo de órdenes de trabajo y garantizar el cumplimiento de cada tarea mediante evidencia digital.
 
-**URL**: https://lovable.dev/projects/e0802b34-adfc-496a-ae0e-230f4b7640fd
+## ¿Qué problema resuelve?
 
-## How can I edit this code?
+Las organizaciones que gestionan trabajos en campo necesitan asegurar que cada paso se ejecute según lo planeado. Bitácora Plus centraliza la información de cada orden de trabajo, captura evidencias (fotos, PDF), geolocaliza, registra firmas y consolida todo en una línea de tiempo con panel de gestión.
 
-There are several ways of editing your application.
+## Características clave
 
-**Use Lovable**
+- Registro multi-tenant con control de acceso por usuario.
+- Captura de evidencias con geotag, firma y deduplicación por checksum.
+- Plantillas de checklists y validación de cumplimiento antes de cerrar una tarea.
+- Dashboard para seguimiento de KPIs como cumplimiento y SLA.
+- Exportación a PDF y API REST (OpenAPI).
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/e0802b34-adfc-496a-ae0e-230f4b7640fd) and start prompting.
+## Instalación
 
-Changes made via Lovable will be committed automatically to this repo.
+1. **Clonar el repositorio**
+   ```bash
+   git clone <YOUR_GIT_URL>
+   cd bitacora-plus
+   ```
+2. **Instalar dependencias**
+   ```bash
+   npm install
+   ```
+3. **Configurar variables de entorno**
+   Crea un archivo `.env` con tus credenciales de Supabase.
+4. **Ejecutar el entorno de desarrollo**
+   ```bash
+   npm run dev
+   ```
 
-**Use your preferred IDE**
+## Capturas de pantalla
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+![Vista del dashboard](public/placeholder.svg)
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+## Demo y documentación
 
-Follow these steps:
+- [Demo en línea](https://lovable.dev/projects/e0802b34-adfc-496a-ae0e-230f4b7640fd)
+- [Referencia de API](openapi.yaml)
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+## Contribución
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+Las contribuciones son bienvenidas. Para colaborar:
 
-# Step 3: Install the necessary dependencies.
-npm i
+1. Haz un fork del repositorio.
+2. Crea una rama con tu mejora (`git checkout -b feature/nueva-funcionalidad`).
+3. Envía un pull request describiendo los cambios.
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
+## Licencia
 
-**Edit a file directly in GitHub**
+Este proyecto se distribuye bajo la licencia MIT. Consulta el archivo [LICENSE](LICENSE) para más detalles.
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## Contacto y redes
 
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/e0802b34-adfc-496a-ae0e-230f4b7640fd) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+- Abre un [issue](../../issues) para soporte o sugerencias.
+- Síguenos en X (Twitter): [@bitacoraplus](https://twitter.com/bitacoraplus)
