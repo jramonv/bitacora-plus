@@ -9,9 +9,9 @@ import { Link } from "react-router-dom";
 import Layout from "@/components/Layout";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { TaskStatus, castAIFlags } from "@/types/database";
+import { TaskStatus } from "@/types/database";
 
-const Dashboard = () => {
+const JefeDashboard = () => {
   // Fetch KPI data
   const { data: kpiData, isLoading: kpiLoading } = useQuery({
     queryKey: ['dashboard-kpis'],
@@ -80,9 +80,14 @@ const Dashboard = () => {
     return <Badge variant={config.variant}>{config.label}</Badge>;
   };
 
-  const getRiskLevel = (task: any) => {
-    const isOverdue = task.due_date && new Date(task.due_date) < new Date();
-    const hasHighRisk = task.ai_risk && task.ai_risk > 70;
+  interface RiskTask {
+    due_date?: string | null;
+    ai_risk?: number | null;
+  }
+
+  const getRiskLevel = (task: RiskTask) => {
+    const isOverdue = task.due_date ? new Date(task.due_date) < new Date() : false;
+    const hasHighRisk = task.ai_risk ? task.ai_risk > 70 : false;
     
     if (isOverdue) return { level: 'Vencida', color: 'text-destructive' };
     if (hasHighRisk) return { level: 'Alto Riesgo', color: 'text-orange-500' };
@@ -95,8 +100,8 @@ const Dashboard = () => {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold">Dashboard</h1>
-            <p className="text-muted-foreground">Resumen operativo y KPIs de cumplimiento</p>
+            <h1 className="text-3xl font-bold">Dashboard del Jefe</h1>
+            <p className="text-muted-foreground">Resumen operativo y administración</p>
           </div>
           <Link to="/subjects">
             <Button>
@@ -242,4 +247,4 @@ const Dashboard = () => {
   );
 };
 
-export default Dashboard;
+export default JefeDashboard;

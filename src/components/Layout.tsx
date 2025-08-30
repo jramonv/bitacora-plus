@@ -1,13 +1,12 @@
 import { ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { 
-  LayoutDashboard, 
-  FileText, 
-  CheckSquare, 
-  Settings, 
+import {
+  LayoutDashboard,
+  FileText,
+  CheckSquare,
+  Settings,
   Menu,
   Home
 } from "lucide-react";
@@ -19,11 +18,20 @@ interface LayoutProps {
 const Layout = ({ children }: LayoutProps) => {
   const location = useLocation();
 
-  const navigation = [
-    { name: "Inicio", href: "/", icon: Home },
-    { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-    { name: "OTs", href: "/subjects", icon: FileText },
-  ];
+  const role = localStorage.getItem('role') || 'operador';
+  const navigation =
+    role === 'jefe'
+      ? [
+          { name: 'Inicio', href: '/', icon: Home },
+          { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+          { name: 'OTs', href: '/subjects', icon: FileText },
+          { name: 'Admin', href: '/admin', icon: Settings },
+        ]
+      : [
+          { name: 'Inicio', href: '/', icon: Home },
+          { name: 'Mis Tareas', href: '/dashboard', icon: CheckSquare },
+          { name: 'OTs', href: '/subjects', icon: FileText },
+        ];
 
   const isActive = (href: string) => {
     if (href === "/") return location.pathname === "/";
@@ -65,7 +73,7 @@ const Layout = ({ children }: LayoutProps) => {
 
             {/* User Menu */}
             <div className="flex items-center space-x-2">
-              <Badge variant="outline">Demo</Badge>
+              <Badge variant="outline" className="capitalize">{role}</Badge>
               <Button variant="ghost" size="icon" className="md:hidden">
                 <Menu className="h-4 w-4" />
               </Button>
