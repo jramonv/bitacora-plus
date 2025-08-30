@@ -13,7 +13,7 @@ import { TaskStatus, castAIFlags } from "@/types/database";
 
 const Dashboard = () => {
   // Fetch KPI data
-  const { data: kpiData, isLoading: kpiLoading } = useQuery({
+  const { data: kpiData, isLoading: kpiLoading, error: kpiError, isError: kpiIsError } = useQuery({
     queryKey: ['dashboard-kpis'],
     queryFn: async () => {
       const { data: tasks, error } = await supabase
@@ -106,6 +106,13 @@ const Dashboard = () => {
           </Link>
         </div>
 
+        {kpiIsError && (
+          <div className="flex items-center p-4 text-destructive bg-destructive/15 rounded-md">
+            <AlertTriangle className="mr-2 h-4 w-4" />
+            <span>{kpiError?.message || 'Error al cargar datos del dashboard'}</span>
+          </div>
+        )}
+
         {/* KPI Cards */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <Card>
@@ -179,6 +186,11 @@ const Dashboard = () => {
               <div className="flex items-center justify-center py-8">
                 <Clock className="mr-2 h-4 w-4 animate-spin" />
                 Cargando...
+              </div>
+            ) : kpiIsError ? (
+              <div className="flex items-center justify-center py-8 text-destructive">
+                <AlertTriangle className="mr-2 h-4 w-4" />
+                {kpiError?.message || 'Error al cargar tasks en riesgo'}
               </div>
             ) : (
               <Table>
