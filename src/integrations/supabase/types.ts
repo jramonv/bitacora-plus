@@ -183,6 +183,47 @@ export type Database = {
           },
         ]
       }
+      ai_settings: {
+        Row: {
+          allow_image_processing: boolean
+          daily_cost_cap_usd: number
+          enabled: boolean
+          model: string
+          redact_pii: boolean
+          summary_length: number
+          tenant_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          allow_image_processing?: boolean
+          daily_cost_cap_usd?: number
+          enabled?: boolean
+          model?: string
+          redact_pii?: boolean
+          summary_length?: number
+          tenant_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          allow_image_processing?: boolean
+          daily_cost_cap_usd?: number
+          enabled?: boolean
+          model?: string
+          redact_pii?: boolean
+          summary_length?: number
+          tenant_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_settings_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: true
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       checklist_runs: {
         Row: {
           completed_at: string | null
