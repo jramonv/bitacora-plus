@@ -578,6 +578,44 @@ export type Database = {
           },
         ]
       }
+      incidents: {
+        Row: {
+          id: string
+          subject_id: string
+          category: string
+          description: string | null
+          status: string
+          created_at: string | null
+          resolved_at: string | null
+        }
+        Insert: {
+          id?: string
+          subject_id: string
+          category: string
+          description?: string | null
+          status?: string
+          created_at?: string | null
+          resolved_at?: string | null
+        }
+        Update: {
+          id?: string
+          subject_id?: string
+          category?: string
+          description?: string | null
+          status?: string
+          created_at?: string | null
+          resolved_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "incidents_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "subjects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       log_entries: {
         Row: {
           created_at: string | null
@@ -1171,3 +1209,13 @@ export const Constants = {
     },
   },
 } as const
+
+export interface Incident {
+  id: string
+  subject_id: string
+  category: string
+  description: string | null
+  status: string
+  created_at: string | null
+  resolved_at: string | null
+}

@@ -68,3 +68,16 @@ export const castLogMetadata = (data: any): LogMetadata => {
   if (!data || typeof data !== 'object') return {};
   return data as LogMetadata;
 };
+
+// Incident types
+export type IncidentStatus = "open" | "in_progress" | "resolved";
+
+export interface Incident {
+  id: string;
+  subject_id: string;
+  category: string;
+  description?: string;
+  status: IncidentStatus;
+  created_at: string;
+  resolved_at?: string | null;
+}
