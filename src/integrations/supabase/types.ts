@@ -479,6 +479,7 @@ export type Database = {
           latitude: number | null
           longitude: number | null
           metadata: Json | null
+          ocr_text: string | null
           task_id: string
           tenant_id: string
         }
@@ -493,6 +494,7 @@ export type Database = {
           latitude?: number | null
           longitude?: number | null
           metadata?: Json | null
+          ocr_text?: string | null
           task_id: string
           tenant_id: string
         }
@@ -507,6 +509,7 @@ export type Database = {
           latitude?: number | null
           longitude?: number | null
           metadata?: Json | null
+          ocr_text?: string | null
           task_id?: string
           tenant_id?: string
         }
@@ -920,9 +923,55 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      v_ai_queue_effective: {
+        Row: {
+          cost_usd: number | null
+          created_at: string | null
+          error: string | null
+          finished_at: string | null
+          id: string | null
+          input_ref: Json | null
+          job_type: Database["public"]["Enums"]["ai_job_type"] | null
+          model: string | null
+          output_ref: string | null
+          started_at: string | null
+          status: Database["public"]["Enums"]["ai_job_status"] | null
+          subject_id: string | null
+          task_id: string | null
+          tenant_id: string | null
+          tokens_in: number | null
+          tokens_out: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_jobs_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "subjects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_jobs_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_jobs_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
+      cleanup_old_idempotency_keys: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
       current_tenant_id: {
         Args: Record<PropertyKey, never>
         Returns: string
@@ -933,6 +982,10 @@ export type Database = {
           api_key: string
           key_id: string
         }[]
+      }
+      redact_pii: {
+        Args: { input_text: string }
+        Returns: string
       }
       revoke_api_key: {
         Args: { p_key_id: string }
