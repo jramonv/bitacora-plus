@@ -1,13 +1,12 @@
-import { ReactNode } from "react";
+import { ReactNode, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { 
-  LayoutDashboard, 
-  FileText, 
-  CheckSquare, 
-  Settings, 
+  LayoutDashboard,
+  FileText,
+  CheckSquare,
   Menu,
   Home
 } from "lucide-react";
@@ -18,6 +17,7 @@ interface LayoutProps {
 
 const Layout = ({ children }: LayoutProps) => {
   const location = useLocation();
+  const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
 
   const navigation = [
     { name: "Inicio", href: "/", icon: Home },
@@ -66,13 +66,41 @@ const Layout = ({ children }: LayoutProps) => {
             {/* User Menu */}
             <div className="flex items-center space-x-2">
               <Badge variant="outline">Demo</Badge>
-              <Button variant="ghost" size="icon" className="md:hidden">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="md:hidden"
+                onClick={() => setIsMobileNavOpen(!isMobileNavOpen)}
+              >
                 <Menu className="h-4 w-4" />
               </Button>
             </div>
           </div>
         </div>
       </header>
+
+      {isMobileNavOpen && (
+        <Sheet open={isMobileNavOpen} onOpenChange={setIsMobileNavOpen}>
+          <SheetContent side="left">
+            <nav className="flex flex-col space-y-4">
+              {navigation.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <Link
+                    key={item.name}
+                    to={item.href}
+                    className="flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium"
+                    onClick={() => setIsMobileNavOpen(false)}
+                  >
+                    <Icon className="h-4 w-4" />
+                    <span>{item.name}</span>
+                  </Link>
+                );
+              })}
+            </nav>
+          </SheetContent>
+        </Sheet>
+      )}
 
       {/* Mobile Navigation */}
       <div className="md:hidden border-b bg-card">
