@@ -17,54 +17,50 @@ const Dashboard = () => {
   const { data: kpiData, isLoading: kpiLoading } = useQuery({
     queryKey: ['dashboard-kpis'],
     queryFn: async () => {
-      const { data: tasks, error } = await supabase
-        .from('tasks')
-        .select(`
-          id,
-          title,
-          status,
-          due_date,
-          completed_at,
-          ai_risk,
-          subjects (
-            id,
-            title,
-            status
-          )
-        `);
-      
-      if (error) throw error;
+      const now = new Date().toISOString();
 
-      const total = tasks?.length || 0;
-      const completed = tasks?.filter(t => t.status === 'completed').length || 0;
-      const onTime = tasks?.filter(t => 
-        t.status === 'completed' && 
-        t.completed_at && 
-        t.due_date && 
-        new Date(t.completed_at) <= new Date(t.due_date)
-      ).length || 0;
-      
-      const today = new Date();
-      const duesToday = tasks?.filter(t => 
-        t.due_date && 
-        format(new Date(t.due_date), 'yyyy-MM-dd') === format(today, 'yyyy-MM-dd') &&
-        t.status !== 'completed'
-      ).length || 0;
-      
-      const atRisk = tasks?.filter(t => 
-        t.status !== 'completed' && 
-        ((t.due_date && new Date(t.due_date) < today) || (t.ai_risk && t.ai_risk > 70))
-      ).length || 0;
+      const [{ data: kpis, error: kpiError }, { data: riskyTasks, error: riskyError }] =
+        await Promise.all([
+          supabase.rpc('dashboard_kpis'),
+          supabase
+            .from('tasks')
+            .select(`
+              id,
+              title,
+              status,
+              due_date,
+              ai_risk,
+              subjects (
+                id,
+                title,
+                status
+              )
+            `)
+            .neq('status', 'completed')
+            .or(`due_date.lt.${now},ai_risk.gt.70`)
+            .order('due_date', { ascending: true })
+            .limit(10)
+        ]);
+
+      if (kpiError) throw kpiError;
+      if (riskyError) throw riskyError;
+
+      const metrics = kpis?.[0] || {
+        total: 0,
+        completed: 0,
+        on_time: 0,
+        dues_today: 0,
+        at_risk: 0
+      };
 
       return {
-        onTimePercentage: completed > 0 ? Math.round((onTime / completed) * 100) : 0,
-        compliancePercentage: total > 0 ? Math.round((completed / total) * 100) : 0,
-        duesToday,
-        atRisk,
-        riskyTasks: tasks?.filter(t => 
-          t.status !== 'completed' && 
-          ((t.due_date && new Date(t.due_date) < today) || (t.ai_risk && t.ai_risk > 70))
-        ).slice(0, 10) || []
+        onTimePercentage:
+          metrics.completed > 0 ? Math.round((metrics.on_time / metrics.completed) * 100) : 0,
+        compliancePercentage:
+          metrics.total > 0 ? Math.round((metrics.completed / metrics.total) * 100) : 0,
+        duesToday: metrics.dues_today,
+        atRisk: metrics.at_risk,
+        riskyTasks: riskyTasks || []
       };
     }
   });
@@ -81,7 +77,7 @@ const Dashboard = () => {
     return <Badge variant={config.variant}>{config.label}</Badge>;
   };
 
-  const getRiskLevel = (task: any) => {
+  const getRiskLevel = (task: { due_date?: string | null; ai_risk?: number | null }) => {
     const isOverdue = task.due_date && new Date(task.due_date) < new Date();
     const hasHighRisk = task.ai_risk && task.ai_risk > 70;
     
