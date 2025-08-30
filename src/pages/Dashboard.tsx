@@ -4,12 +4,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar, AlertTriangle, CheckCircle, Clock, Plus } from "lucide-react";
 import { Link } from "react-router-dom";
 import Layout from "@/components/Layout";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { TaskStatus, castAIFlags } from "@/types/database";
+import { TaskStatus } from "@/types/database";
+import TasksMap from "@/components/TasksMap";
 
 const Dashboard = () => {
   // Fetch KPI data
@@ -106,137 +108,150 @@ const Dashboard = () => {
           </Link>
         </div>
 
-        {/* KPI Cards */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">On-time %</CardTitle>
-              <CheckCircle className="h-4 w-4 text-green-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {kpiLoading ? '-' : `${kpiData?.onTimePercentage || 0}%`}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Tareas completadas a tiempo
-              </p>
-            </CardContent>
-          </Card>
+        <Tabs defaultValue="overview" className="space-y-4">
+          <TabsList>
+            <TabsTrigger value="overview">Resumen</TabsTrigger>
+            <TabsTrigger value="map">Mapa</TabsTrigger>
+          </TabsList>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Compliance-ok %</CardTitle>
-              <CheckCircle className="h-4 w-4 text-blue-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {kpiLoading ? '-' : `${kpiData?.compliancePercentage || 0}%`}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Cumplimiento general
-              </p>
-            </CardContent>
-          </Card>
+          <TabsContent value="overview" className="space-y-6">
+            {/* KPI Cards */}
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">On-time %</CardTitle>
+                  <CheckCircle className="h-4 w-4 text-green-600" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">
+                    {kpiLoading ? '-' : `${kpiData?.onTimePercentage || 0}%`}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Tareas completadas a tiempo
+                  </p>
+                </CardContent>
+              </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">SLAs Hoy</CardTitle>
-              <Calendar className="h-4 w-4 text-yellow-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {kpiLoading ? '-' : kpiData?.duesToday || 0}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Vencen hoy
-              </p>
-            </CardContent>
-          </Card>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Compliance-ok %</CardTitle>
+                  <CheckCircle className="h-4 w-4 text-blue-600" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">
+                    {kpiLoading ? '-' : `${kpiData?.compliancePercentage || 0}%`}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Cumplimiento general
+                  </p>
+                </CardContent>
+              </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">En Riesgo</CardTitle>
-              <AlertTriangle className="h-4 w-4 text-destructive" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {kpiLoading ? '-' : kpiData?.atRisk || 0}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Tareas críticas
-              </p>
-            </CardContent>
-          </Card>
-        </div>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">SLAs Hoy</CardTitle>
+                  <Calendar className="h-4 w-4 text-yellow-600" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">
+                    {kpiLoading ? '-' : kpiData?.duesToday || 0}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Vencen hoy
+                  </p>
+                </CardContent>
+              </Card>
 
-        {/* Tasks en Riesgo Table */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Tasks en Riesgo</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {kpiLoading ? (
-              <div className="flex items-center justify-center py-8">
-                <Clock className="mr-2 h-4 w-4 animate-spin" />
-                Cargando...
-              </div>
-            ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Task</TableHead>
-                    <TableHead>OT</TableHead>
-                    <TableHead>Estado</TableHead>
-                    <TableHead>Vencimiento</TableHead>
-                    <TableHead>Nivel de Riesgo</TableHead>
-                    <TableHead className="text-right">Acciones</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {kpiData?.riskyTasks.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                        No hay tasks en riesgo
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    kpiData?.riskyTasks.map((task) => {
-                      const risk = getRiskLevel(task);
-                      return (
-                        <TableRow key={task.id}>
-                          <TableCell className="font-medium">
-                            <Link to={`/tasks/${task.id}`} className="hover:underline">
-                              {task.title}
-                            </Link>
-                          </TableCell>
-                          <TableCell>
-                            <Link to={`/subjects/${task.subjects.id}`} className="hover:underline text-primary">
-                              {task.subjects.title}
-                            </Link>
-                          </TableCell>
-                          <TableCell>{getStatusBadge(task.status)}</TableCell>
-                          <TableCell>
-                            {task.due_date ? format(new Date(task.due_date), 'dd/MM/yyyy', { locale: es }) : 'Sin fecha'}
-                          </TableCell>
-                          <TableCell>
-                            <span className={risk.color}>{risk.level}</span>
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <Link to={`/tasks/${task.id}`}>
-                              <Button variant="outline" size="sm">
-                                Ver Detalle
-                              </Button>
-                            </Link>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">En Riesgo</CardTitle>
+                  <AlertTriangle className="h-4 w-4 text-destructive" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">
+                    {kpiLoading ? '-' : kpiData?.atRisk || 0}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Tareas críticas
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Tasks en Riesgo Table */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Tasks en Riesgo</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {kpiLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Clock className="mr-2 h-4 w-4 animate-spin" />
+                    Cargando...
+                  </div>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Task</TableHead>
+                        <TableHead>OT</TableHead>
+                        <TableHead>Estado</TableHead>
+                        <TableHead>Vencimiento</TableHead>
+                        <TableHead>Nivel de Riesgo</TableHead>
+                        <TableHead className="text-right">Acciones</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {kpiData?.riskyTasks.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                            No hay tasks en riesgo
                           </TableCell>
                         </TableRow>
-                      );
-                    })
-                  )}
-                </TableBody>
-              </Table>
-            )}
-          </CardContent>
-        </Card>
+                      ) : (
+                        kpiData?.riskyTasks.map((task) => {
+                          const risk = getRiskLevel(task);
+                          return (
+                            <TableRow key={task.id}>
+                              <TableCell className="font-medium">
+                                <Link to={`/tasks/${task.id}`} className="hover:underline">
+                                  {task.title}
+                                </Link>
+                              </TableCell>
+                              <TableCell>
+                                <Link to={`/subjects/${task.subjects.id}`} className="hover:underline text-primary">
+                                  {task.subjects.title}
+                                </Link>
+                              </TableCell>
+                              <TableCell>{getStatusBadge(task.status)}</TableCell>
+                              <TableCell>
+                                {task.due_date ? format(new Date(task.due_date), 'dd/MM/yyyy', { locale: es }) : 'Sin fecha'}
+                              </TableCell>
+                              <TableCell>
+                                <span className={risk.color}>{risk.level}</span>
+                              </TableCell>
+                              <TableCell className="text-right">
+                                <Link to={`/tasks/${task.id}`}>
+                                  <Button variant="outline" size="sm">
+                                    Ver Detalle
+                                  </Button>
+                                </Link>
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })
+                      )}
+                    </TableBody>
+                  </Table>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="map">
+            <TasksMap />
+          </TabsContent>
+        </Tabs>
       </div>
     </Layout>
   );
