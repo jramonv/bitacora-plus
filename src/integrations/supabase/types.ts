@@ -458,6 +458,8 @@ export type Database = {
       }
       subjects: {
         Row: {
+          ai_health: number | null
+          ai_top_issues: Json | null
           closed_at: string | null
           created_at: string | null
           created_by: string | null
@@ -470,6 +472,8 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          ai_health?: number | null
+          ai_top_issues?: Json | null
           closed_at?: string | null
           created_at?: string | null
           created_by?: string | null
@@ -482,6 +486,8 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          ai_health?: number | null
+          ai_top_issues?: Json | null
           closed_at?: string | null
           created_at?: string | null
           created_by?: string | null
@@ -512,6 +518,9 @@ export type Database = {
       }
       tasks: {
         Row: {
+          ai_flags: Json | null
+          ai_last_summary_id: string | null
+          ai_risk: number | null
           assigned_to: string | null
           checklist_id: string | null
           completed_at: string | null
@@ -527,6 +536,9 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          ai_flags?: Json | null
+          ai_last_summary_id?: string | null
+          ai_risk?: number | null
           assigned_to?: string | null
           checklist_id?: string | null
           completed_at?: string | null
@@ -542,6 +554,9 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          ai_flags?: Json | null
+          ai_last_summary_id?: string | null
+          ai_risk?: number | null
           assigned_to?: string | null
           checklist_id?: string | null
           completed_at?: string | null
@@ -557,6 +572,13 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "tasks_ai_last_summary_id_fkey"
+            columns: ["ai_last_summary_id"]
+            isOneToOne: false
+            referencedRelation: "ai_outputs"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "tasks_assigned_to_fkey"
             columns: ["assigned_to"]
