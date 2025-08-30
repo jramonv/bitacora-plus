@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { useDropzone } from "react-dropzone";
+import { useDropzone, FileRejection } from "react-dropzone";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -173,12 +173,26 @@ export const EvidenceUpload = ({ taskId, tenantId, subjectId, onUploadComplete, 
     setUploadingFiles(prev => prev.filter(uf => uf.file !== file));
   };
 
+  const onDropRejected = useCallback((fileRejections: FileRejection[]) => {
+    fileRejections.forEach(rejection => {
+      if (rejection.errors.some(e => e.code === 'file-too-large')) {
+        toast({
+          title: "Archivo demasiado grande",
+          description: `"${rejection.file.name}" excede el tamaño máximo de 10 MB.`,
+          variant: "destructive",
+        });
+      }
+    });
+  }, [toast]);
+
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
+    onDropRejected,
     accept: {
       'image/*': ['.jpg', '.jpeg', '.png', '.gif'],
       'application/pdf': ['.pdf']
     },
+    maxSize: 10 * 1024 * 1024,
     disabled
   });
 
@@ -203,6 +217,9 @@ export const EvidenceUpload = ({ taskId, tenantId, subjectId, onUploadComplete, 
           </p>
           <p className="text-xs text-muted-foreground mb-2">
             Formatos permitidos: JPG, PNG, GIF, PDF
+          </p>
+          <p className="text-xs text-muted-foreground mb-2">
+            Tamaño máximo por archivo: 10 MB
           </p>
           <Button variant="outline" type="button">
             Seleccionar Archivos
