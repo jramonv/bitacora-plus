@@ -8,6 +8,14 @@ import { Upload, X, AlertTriangle } from "lucide-react";
 import CryptoJS from "crypto-js";
 import { EvidenceKind } from "@/types/database";
 
+export const getEvidenceThumbnailUrl = (filePath: string) =>
+  supabase.storage
+    .from("bitacora")
+    .getPublicUrl(filePath, { transform: { width: 150 } }).data.publicUrl;
+
+export const getEvidencePublicUrl = (filePath: string) =>
+  supabase.storage.from("bitacora").getPublicUrl(filePath).data.publicUrl;
+
 interface EvidenceUploadProps {
   taskId: string;
   tenantId: string;

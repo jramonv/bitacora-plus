@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useParams } from "react-router-dom";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -12,13 +12,13 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
-import { CalendarIcon, Clock, Upload, FileText, Download, Lock, CheckCircle, AlertTriangle, MapPin, Signature, FileDown } from "lucide-react";
+import { CalendarIcon, Clock, FileText, Download, Lock, CheckCircle, AlertTriangle, MapPin, Signature } from "lucide-react";
 import Layout from "@/components/Layout";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
-import { TaskStatus, RequiredEvidence, castRequiredEvidence } from "@/types/database";
-import { EvidenceUpload } from "@/components/EvidenceUpload";
+import { TaskStatus, castRequiredEvidence } from "@/types/database";
+import { EvidenceUpload, getEvidenceThumbnailUrl, getEvidencePublicUrl } from "@/components/EvidenceUpload";
 
 const TaskDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -50,15 +50,6 @@ const TaskDetail = () => {
               name,
               items
             )
-          ),
-          evidence (
-            id,
-            filename,
-            file_path,
-            kind,
-            latitude,
-            longitude,
-            created_at
           )
         `)
         .eq('id', id)
@@ -75,6 +66,46 @@ const TaskDetail = () => {
         required_evidence: data.required_evidence || {}
       });
       
+      return data;
+    },
+    enabled: !!id
+  });
+
+  const {
+    data: evidencePages,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    refetch: refetchEvidence
+  } = useInfiniteQuery({
+    queryKey: ['evidence', id],
+    queryFn: async ({ pageParam = 0 }) => {
+      const from = pageParam * 25;
+      const to = from + 24;
+      const { data, error } = await supabase
+        .from('evidence')
+        .select('id, filename, file_path, kind, latitude, longitude, created_at')
+        .eq('task_id', id)
+        .order('created_at', { ascending: false })
+        .range(from, to);
+      if (error) throw error;
+      return data;
+    },
+    getNextPageParam: (lastPage, pages) =>
+      lastPage.length === 25 ? pages.length : undefined,
+    enabled: !!id
+  });
+
+  const evidenceList = evidencePages?.pages.flat() ?? [];
+
+  const { data: evidenceStats, refetch: refetchEvidenceStats } = useQuery({
+    queryKey: ['evidence-stats', id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('evidence')
+        .select('id, kind, latitude, longitude')
+        .eq('task_id', id);
+      if (error) throw error;
       return data;
     },
     enabled: !!id
@@ -195,7 +226,7 @@ const TaskDetail = () => {
     if (!task) return { canClose: false, errors: ['Task no encontrada'] };
     
     const errors: string[] = [];
-    const evidence = task.evidence || [];
+    const evidence = evidenceStats || [];
     const required = castRequiredEvidence(task.required_evidence);
     
     // 1. Check minimum photos
@@ -323,11 +354,12 @@ const TaskDetail = () => {
     );
   }
 
-  const evidence = task.evidence || [];
+  const allEvidence = evidenceStats || [];
+  const evidence = evidenceList;
   const required = castRequiredEvidence(task.required_evidence);
-  const photoCount = evidence.filter(e => e.kind === 'photo').length;
-  const hasGeotag = evidence.some(e => e.latitude && e.longitude);
-  const hasSignature = evidence.some(e => e.kind === 'pdf');
+  const photoCount = allEvidence.filter(e => e.kind === 'photo').length;
+  const hasGeotag = allEvidence.some(e => e.latitude && e.longitude);
+  const hasSignature = allEvidence.some(e => e.kind === 'pdf');
 
   return (
     <Layout>
@@ -615,7 +647,10 @@ const TaskDetail = () => {
                   taskId={id!}
                   tenantId={task.tenant_id}
                   subjectId={task.subject_id}
-                  onUploadComplete={() => queryClient.invalidateQueries({ queryKey: ['task', id] })}
+                  onUploadComplete={() => {
+                    refetchEvidence();
+                    refetchEvidenceStats();
+                  }}
                   disabled={task.status === 'completed'}
                 />
 
@@ -626,26 +661,57 @@ const TaskDetail = () => {
                       No hay evidencias subidas
                     </p>
                   ) : (
-                    evidence.map((item) => (
-                      <div key={item.id} className="flex items-center justify-between p-2 border rounded">
-                        <div className="flex items-center space-x-2">
-                          {item.kind === 'photo' ? (
-                            <FileText className="h-4 w-4" />
-                          ) : (
-                            <FileText className="h-4 w-4" />
-                          )}
-                          <div>
-                            <p className="text-sm font-medium">{item.filename}</p>
-                            <p className="text-xs text-muted-foreground">
-                              {format(new Date(item.created_at), 'dd/MM/yyyy HH:mm', { locale: es })}
-                              {item.latitude && item.longitude && (
-                                <span className="ml-2 text-green-600">📍 Geotagged</span>
-                              )}
-                            </p>
+                    <>
+                      {evidence.map((item) => (
+                        <div key={item.id} className="flex items-center justify-between p-2 border rounded">
+                          <div className="flex items-center space-x-2">
+                            {item.kind === 'photo' ? (
+                              <img
+                                src={getEvidenceThumbnailUrl(item.file_path)}
+                                alt={item.filename}
+                                className="h-[150px] w-[150px] object-cover rounded cursor-pointer"
+                                loading="lazy"
+                                onClick={() => {
+                                  const url = getEvidencePublicUrl(item.file_path);
+                                  window.open(url, '_blank');
+                                }}
+                              />
+                            ) : (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => {
+                                  const url = getEvidencePublicUrl(item.file_path);
+                                  window.open(url, '_blank');
+                                }}
+                              >
+                                <FileText className="h-4 w-4" />
+                              </Button>
+                            )}
+                            <div>
+                              <p className="text-sm font-medium">{item.filename}</p>
+                              <p className="text-xs text-muted-foreground">
+                                {format(new Date(item.created_at), 'dd/MM/yyyy HH:mm', { locale: es })}
+                                {item.latitude && item.longitude && (
+                                  <span className="ml-2 text-green-600">📍 Geotagged</span>
+                                )}
+                              </p>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))
+                      ))}
+                      {hasNextPage && (
+                        <div className="flex justify-center">
+                          <Button
+                            variant="outline"
+                            onClick={() => fetchNextPage()}
+                            disabled={isFetchingNextPage}
+                          >
+                            {isFetchingNextPage ? 'Cargando...' : 'Cargar más'}
+                          </Button>
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
               </CardContent>
