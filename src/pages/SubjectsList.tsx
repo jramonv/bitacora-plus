@@ -16,6 +16,7 @@ import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { SubjectStatus } from "@/types/database";
+import { Subject, Task } from "@/types/entities";
 
 const SubjectsList = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -24,11 +25,11 @@ const SubjectsList = () => {
   const [dateTo, setDateTo] = useState<Date>();
 
   // Fetch subjects with filters
-  const { data: subjects, isLoading } = useQuery({
+  const { data: subjects, isLoading } = useQuery<Subject[]>({
     queryKey: ['subjects', searchTerm, statusFilter, dateFrom, dateTo],
     queryFn: async () => {
       let query = supabase
-        .from('subjects')
+        .from<Subject>('subjects')
         .select(`
           id,
           title,
@@ -63,7 +64,7 @@ const SubjectsList = () => {
 
       const { data, error } = await query;
       if (error) throw error;
-      return data;
+      return data as Subject[];
     }
   });
 
@@ -79,11 +80,11 @@ const SubjectsList = () => {
     return <Badge variant={config.variant}>{config.label}</Badge>;
   };
 
-  const getTasksStats = (tasks: any[]) => {
+  const getTasksStats = (tasks: Task[]) => {
     const total = tasks.length;
-    const completed = tasks.filter(t => t.status === 'completed').length;
+    const completed = tasks.filter((t: Task) => t.status === 'completed').length;
     const pending = total - completed;
-    
+
     return { total, completed, pending };
   };
 
