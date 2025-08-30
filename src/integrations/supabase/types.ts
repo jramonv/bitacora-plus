@@ -224,6 +224,44 @@ export type Database = {
           },
         ]
       }
+      api_keys: {
+        Row: {
+          active: boolean
+          created_at: string | null
+          id: string
+          key_hash: string
+          last_used_at: string | null
+          name: string
+          tenant_id: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string | null
+          id?: string
+          key_hash: string
+          last_used_at?: string | null
+          name: string
+          tenant_id: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string | null
+          id?: string
+          key_hash?: string
+          last_used_at?: string | null
+          name?: string
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "api_keys_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       checklist_runs: {
         Row: {
           completed_at: string | null
@@ -384,6 +422,47 @@ export type Database = {
           },
           {
             foreignKeyName: "evidence_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      idempotency_keys: {
+        Row: {
+          created_at: string | null
+          id: string
+          idempotency_key: string
+          request_hash: string
+          response_body: Json | null
+          route: string
+          status_code: number | null
+          tenant_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          idempotency_key: string
+          request_hash: string
+          response_body?: Json | null
+          route: string
+          status_code?: number | null
+          tenant_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          idempotency_key?: string
+          request_hash?: string
+          response_body?: Json | null
+          route?: string
+          status_code?: number | null
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "idempotency_keys_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
