@@ -91,7 +91,7 @@ export const EvidenceUpload = ({ taskId, tenantId, subjectId, onUploadComplete, 
       );
 
       // Get file metadata (including geolocation if available)
-      const metadata: any = {
+      const metadata: Record<string, unknown> = {
         originalName: file.name,
         size: file.size,
         mimeType: file.type,
@@ -142,14 +142,15 @@ export const EvidenceUpload = ({ taskId, tenantId, subjectId, onUploadComplete, 
 
       onUploadComplete();
 
-    } catch (error: any) {
-      setUploadingFiles(prev => 
-        prev.map(uf => uf.file === uploadingFile.file ? { ...uf, error: error.message } : uf)
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+      setUploadingFiles(prev =>
+        prev.map(uf => uf.file === uploadingFile.file ? { ...uf, error: message } : uf)
       );
-      
+
       toast({
         title: "Error al subir archivo",
-        description: error.message,
+        description: message,
         variant: "destructive",
       });
     }
@@ -194,7 +195,7 @@ export const EvidenceUpload = ({ taskId, tenantId, subjectId, onUploadComplete, 
           }`}
         >
           <input {...getInputProps()} />
-          <Upload className="mx-auto h-8 w-8 text-muted-foreground mb-2" />
+          <Upload aria-hidden="true" className="mx-auto h-8 w-8 text-muted-foreground mb-2" />
           <p className="text-sm text-muted-foreground mb-2">
             {isDragActive 
               ? 'Suelta los archivos aquí...' 
@@ -222,14 +223,15 @@ export const EvidenceUpload = ({ taskId, tenantId, subjectId, onUploadComplete, 
                   <Button
                     variant="ghost"
                     size="sm"
+                    aria-label="Eliminar archivo"
                     onClick={() => removeUpload(uploadingFile.file)}
                   >
-                    <X className="h-4 w-4" />
+                    <X aria-hidden="true" className="h-4 w-4" />
                   </Button>
                 </div>
                 {uploadingFile.error ? (
                   <div className="flex items-center space-x-1 text-destructive">
-                    <AlertTriangle className="h-3 w-3" />
+                    <AlertTriangle aria-hidden="true" className="h-3 w-3" />
                     <span className="text-xs">{uploadingFile.error}</span>
                   </div>
                 ) : (
