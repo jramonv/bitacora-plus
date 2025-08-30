@@ -12,13 +12,20 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
-import { CalendarIcon, Clock, Upload, FileText, Download, Lock, CheckCircle, AlertTriangle, MapPin, Signature, FileDown } from "lucide-react";
+import { CalendarIcon, Clock, FileText, Download, Lock, CheckCircle, AlertTriangle, MapPin, Signature } from "lucide-react";
 import Layout from "@/components/Layout";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
-import { TaskStatus, RequiredEvidence, castRequiredEvidence } from "@/types/database";
+import { TaskStatus, castRequiredEvidence } from "@/types/database";
 import { EvidenceUpload } from "@/components/EvidenceUpload";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 const TaskDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -27,6 +34,8 @@ const TaskDetail = () => {
   
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState<any>({});
+  const [showRequirementsModal, setShowRequirementsModal] = useState(false);
+  const [missingRequirements, setMissingRequirements] = useState<{ message: string; link: string }[]>([]);
 
   // Fetch task details
   const { data: task, isLoading } = useQuery({
@@ -113,7 +122,7 @@ const TaskDetail = () => {
       // First validate the task can be closed
       const validation = validateTaskClosure();
       if (!validation.canClose) {
-        throw new Error(validation.errors.join('; '));
+        throw new Error(validation.errors.map(e => e.message).join('; '));
       }
 
       // Update task status
@@ -179,61 +188,74 @@ const TaskDetail = () => {
   const handleClose = () => {
     const validation = validateTaskClosure();
     if (!validation.canClose) {
-      validation.errors.forEach(error => {
-        toast({
-          title: "Requisitos faltantes",
-          description: error,
-          variant: "destructive",
-        });
-      });
+      setMissingRequirements(validation.errors);
+      setShowRequirementsModal(true);
       return;
     }
     closeTaskMutation.mutate();
   };
 
   const validateTaskClosure = () => {
-    if (!task) return { canClose: false, errors: ['Task no encontrada'] };
-    
-    const errors: string[] = [];
+    if (!task) return { canClose: false, errors: [{ message: 'Task no encontrada', link: '#' }] };
+
+    const errors: { message: string; link: string }[] = [];
     const evidence = task.evidence || [];
     const required = castRequiredEvidence(task.required_evidence);
-    
+
     // 1. Check minimum photos
     const photoCount = evidence.filter(e => e.kind === 'photo').length;
     const minPhotos = required.min_photos || 3;
     if (photoCount < minPhotos) {
-      errors.push(`Faltan ${minPhotos - photoCount} fotos (${photoCount}/${minPhotos})`);
+      errors.push({
+        message: `Faltan ${minPhotos - photoCount} fotos (${photoCount}/${minPhotos})`,
+        link: '#evidence-section'
+      });
     }
-    
+
     // 2. Check geotag requirement
     if (required.geotag_required) {
       const hasGeotag = evidence.some(e => e.latitude && e.longitude);
       if (!hasGeotag) {
-        errors.push('Se requiere al menos una evidencia con geolocalización');
+        errors.push({
+          message: 'Se requiere al menos una evidencia con geolocalización',
+          link: '#evidence-section'
+        });
       }
     }
-    
-    // 3. Check signature requirement  
+
+    // 3. Check signature requirement
     if (required.signature_required) {
       const hasSignature = evidence.some(e => e.kind === 'pdf');
       if (!hasSignature) {
-        errors.push('Se requiere firma o documento firmado (PDF)');
+        errors.push({
+          message: 'Se requiere firma o documento firmado (PDF)',
+          link: '#evidence-section'
+        });
       }
     }
-    
+
     // 4. Check checklist requirement
     if (required.checklist_id && task.checklist_runs && task.checklist_runs.length > 0) {
       const checklistRun = task.checklist_runs[0];
-      if (!checklistRun.completed_at) {
-        errors.push('Debe completar el checklist antes de cerrar');
-      }
-      // Check score if available
+      const checklistItems = (checklistRun.checklist_templates?.items as any[]) || [];
       const result = checklistRun.result as any;
+      const answers = Array.isArray(result) ? result : result?.items || [];
+      checklistItems.forEach((item, idx) => {
+        if (!answers?.[idx]?.checked) {
+          errors.push({
+            message: `Checklist: ${item.text} pendiente`,
+            link: '#checklist-section'
+          });
+        }
+      });
+      if (!checklistRun.completed_at) {
+        errors.push({ message: 'Debe confirmar el checklist', link: '#checklist-section' });
+      }
       if (result && typeof result.score === 'number' && result.score < 0) {
-        errors.push('El checklist debe tener una puntuación válida');
+        errors.push({ message: 'El checklist debe tener una puntuación válida', link: '#checklist-section' });
       }
     }
-    
+
     return { canClose: errors.length === 0, errors };
   };
 
@@ -524,7 +546,7 @@ const TaskDetail = () => {
 
             {/* Checklist */}
             {task.checklist_runs && task.checklist_runs.length > 0 && (
-              <Card>
+              <Card id="checklist-section">
                 <CardHeader>
                   <CardTitle>Checklist: {task.checklist_runs[0].checklist_templates?.name}</CardTitle>
                 </CardHeader>
@@ -606,7 +628,7 @@ const TaskDetail = () => {
             </Card>
 
             {/* Evidence Upload */}
-            <Card>
+            <Card id="evidence-section">
               <CardHeader>
                 <CardTitle>Evidencias</CardTitle>
               </CardHeader>
@@ -653,6 +675,29 @@ const TaskDetail = () => {
           </div>
         </div>
       </div>
+      <Dialog open={showRequirementsModal} onOpenChange={setShowRequirementsModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Requisitos faltantes</DialogTitle>
+          </DialogHeader>
+          <ul className="list-disc space-y-2 pl-4">
+            {missingRequirements.map((req, idx) => (
+              <li key={idx}>
+                <a
+                  href={req.link}
+                  className="text-primary underline"
+                  onClick={() => setShowRequirementsModal(false)}
+                >
+                  {req.message}
+                </a>
+              </li>
+            ))}
+          </ul>
+          <DialogFooter>
+            <Button onClick={() => setShowRequirementsModal(false)}>Cerrar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Layout>
   );
 };
