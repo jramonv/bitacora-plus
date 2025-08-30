@@ -79,11 +79,11 @@ const SubjectsList = () => {
     return <Badge variant={config.variant}>{config.label}</Badge>;
   };
 
-  const getTasksStats = (tasks: any[]) => {
+  const getTasksStats = (tasks: { status: string }[]) => {
     const total = tasks.length;
     const completed = tasks.filter(t => t.status === 'completed').length;
     const pending = total - completed;
-    
+
     return { total, completed, pending };
   };
 
@@ -206,72 +206,47 @@ const SubjectsList = () => {
                 Cargando OTs...
               </div>
             ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>OT</TableHead>
-                    <TableHead>Estado</TableHead>
-                    <TableHead>Vencimiento</TableHead>
-                    <TableHead>Tasks</TableHead>
-                    <TableHead>Salud IA</TableHead>
-                    <TableHead className="text-right">Acciones</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
+              <>
+                <div className="md:hidden space-y-4 p-4">
                   {!subjects || subjects.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                        No se encontraron órdenes de trabajo
-                      </TableCell>
-                    </TableRow>
+                    <p className="text-center py-8 text-muted-foreground">
+                      No se encontraron órdenes de trabajo
+                    </p>
                   ) : (
                     subjects.map((subject) => {
                       const tasksStats = getTasksStats(subject.tasks || []);
                       const healthIndicator = getHealthIndicator(subject.ai_health);
-                      
+
                       return (
-                        <TableRow key={subject.id}>
-                          <TableCell>
-                            <div>
+                        <Card key={subject.id}>
+                          <CardContent className="p-4 space-y-2">
+                            <div className="flex justify-between items-center">
                               <Link to={`/subjects/${subject.id}`} className="font-medium hover:underline">
                                 {subject.title}
                               </Link>
-                              {subject.description && (
-                                <p className="text-sm text-muted-foreground truncate max-w-xs">
-                                  {subject.description}
-                                </p>
-                              )}
+                              {getStatusBadge(subject.status)}
                             </div>
-                          </TableCell>
-                          <TableCell>{getStatusBadge(subject.status)}</TableCell>
-                          <TableCell>
-                            {subject.due_date ? (
-                              <div className="text-sm">
-                                {format(new Date(subject.due_date), 'dd/MM/yyyy', { locale: es })}
-                                {new Date(subject.due_date) < new Date() && subject.status !== 'closed' && (
-                                  <Badge variant="destructive" className="ml-2 text-xs">Vencido</Badge>
-                                )}
-                              </div>
-                            ) : (
-                              <span className="text-muted-foreground">Sin fecha</span>
+                            {subject.description && (
+                              <p className="text-sm text-muted-foreground">
+                                {subject.description}
+                              </p>
                             )}
-                          </TableCell>
-                          <TableCell>
+                            <div className="text-sm">
+                              {subject.due_date
+                                ? format(new Date(subject.due_date), 'dd/MM/yyyy', { locale: es })
+                                : 'Sin fecha'}
+                            </div>
                             <div className="flex items-center space-x-2">
                               <Badge variant="outline">{tasksStats.total}</Badge>
                               {tasksStats.pending > 0 && (
                                 <Badge variant="secondary">{tasksStats.pending} pendientes</Badge>
                               )}
                             </div>
-                          </TableCell>
-                          <TableCell>
                             <div className="flex items-center space-x-2">
                               <div className={`w-3 h-3 rounded-full ${healthIndicator.color}`} />
                               <span className="text-sm">{healthIndicator.label}</span>
                             </div>
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <div className="flex justify-end space-x-2">
+                            <div className="flex justify-end space-x-2 pt-2">
                               <Link to={`/subjects/${subject.id}`}>
                                 <Button variant="outline" size="sm">
                                   Ver Detalle
@@ -281,13 +256,99 @@ const SubjectsList = () => {
                                 Nueva Task
                               </Button>
                             </div>
-                          </TableCell>
-                        </TableRow>
+                          </CardContent>
+                        </Card>
                       );
                     })
                   )}
-                </TableBody>
-              </Table>
+                </div>
+                <div className="overflow-x-auto hidden md:block">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>OT</TableHead>
+                        <TableHead>Estado</TableHead>
+                        <TableHead>Vencimiento</TableHead>
+                        <TableHead>Tasks</TableHead>
+                        <TableHead>Salud IA</TableHead>
+                        <TableHead className="text-right">Acciones</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {!subjects || subjects.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                            No se encontraron órdenes de trabajo
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        subjects.map((subject) => {
+                          const tasksStats = getTasksStats(subject.tasks || []);
+                          const healthIndicator = getHealthIndicator(subject.ai_health);
+
+                          return (
+                            <TableRow key={subject.id}>
+                              <TableCell>
+                                <div>
+                                  <Link to={`/subjects/${subject.id}`} className="font-medium hover:underline">
+                                    {subject.title}
+                                  </Link>
+                                  {subject.description && (
+                                    <p className="text-sm text-muted-foreground truncate max-w-xs">
+                                      {subject.description}
+                                    </p>
+                                  )}
+                                </div>
+                              </TableCell>
+                              <TableCell className="whitespace-nowrap">
+                                {getStatusBadge(subject.status)}
+                              </TableCell>
+                              <TableCell className="whitespace-nowrap">
+                                {subject.due_date ? (
+                                  <div className="text-sm">
+                                    {format(new Date(subject.due_date), 'dd/MM/yyyy', { locale: es })}
+                                    {new Date(subject.due_date) < new Date() && subject.status !== 'closed' && (
+                                      <Badge variant="destructive" className="ml-2 text-xs">Vencido</Badge>
+                                    )}
+                                  </div>
+                                ) : (
+                                  <span className="text-muted-foreground">Sin fecha</span>
+                                )}
+                              </TableCell>
+                              <TableCell className="whitespace-nowrap">
+                                <div className="flex items-center space-x-2">
+                                  <Badge variant="outline">{tasksStats.total}</Badge>
+                                  {tasksStats.pending > 0 && (
+                                    <Badge variant="secondary">{tasksStats.pending} pendientes</Badge>
+                                  )}
+                                </div>
+                              </TableCell>
+                              <TableCell className="whitespace-nowrap">
+                                <div className="flex items-center space-x-2">
+                                  <div className={`w-3 h-3 rounded-full ${healthIndicator.color}`} />
+                                  <span className="text-sm">{healthIndicator.label}</span>
+                                </div>
+                              </TableCell>
+                              <TableCell className="text-right whitespace-nowrap">
+                                <div className="flex justify-end space-x-2">
+                                  <Link to={`/subjects/${subject.id}`}>
+                                    <Button variant="outline" size="sm">
+                                      Ver Detalle
+                                    </Button>
+                                  </Link>
+                                  <Button variant="outline" size="sm">
+                                    Nueva Task
+                                  </Button>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+              </>
             )}
           </CardContent>
         </Card>
