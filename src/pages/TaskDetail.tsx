@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { invokeFunction } from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -267,7 +268,7 @@ const TaskDetail = () => {
         return;
       }
 
-      const response = await fetch(`https://eeprxrlmcbtywuuwnuex.supabase.co/functions/v1/export-task-pdf/${id}.pdf`, {
+      const response = await invokeFunction(`export-task-pdf/${id}.pdf`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${session.access_token}`,
