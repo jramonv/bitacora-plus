@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { CalendarIcon, Search, Filter, Plus, Clock } from "lucide-react";
+import { CalendarIcon, Search, Filter, Plus, Clock, AlertTriangle } from "lucide-react";
 import { Link } from "react-router-dom";
 import Layout from "@/components/Layout";
 import { format } from "date-fns";
@@ -24,7 +24,7 @@ const SubjectsList = () => {
   const [dateTo, setDateTo] = useState<Date>();
 
   // Fetch subjects with filters
-  const { data: subjects, isLoading } = useQuery({
+  const { data: subjects, isLoading, error } = useQuery({
     queryKey: ['subjects', searchTerm, statusFilter, dateFrom, dateTo],
     queryFn: async () => {
       let query = supabase
@@ -64,6 +64,10 @@ const SubjectsList = () => {
       const { data, error } = await query;
       if (error) throw error;
       return data;
+    },
+    retry: 1,
+    onError: (error) => {
+      console.error('Error fetching subjects:', error);
     }
   });
 
@@ -204,6 +208,11 @@ const SubjectsList = () => {
               <div className="flex items-center justify-center py-8">
                 <Clock className="mr-2 h-4 w-4 animate-spin" />
                 Cargando OTs...
+              </div>
+            ) : error ? (
+              <div className="flex items-center justify-center py-8 text-destructive">
+                <AlertTriangle className="mr-2 h-4 w-4" />
+                Error al cargar las OTs
               </div>
             ) : (
               <Table>

@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Calendar, Clock, FileText, Image, BarChart3, Download, Plus, FileDown } from "lucide-react";
+import { Calendar, Clock, FileText, Image, BarChart3, Download, Plus, FileDown, AlertTriangle } from "lucide-react";
 import { Link } from "react-router-dom";
 import Layout from "@/components/Layout";
 import { format } from "date-fns";
@@ -19,7 +19,7 @@ const SubjectDetail = () => {
   const { toast } = useToast();
 
   // Fetch subject details
-  const { data: subject, isLoading } = useQuery({
+  const { data: subject, isLoading, error } = useQuery({
     queryKey: ['subject', id],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -50,11 +50,15 @@ const SubjectDetail = () => {
       if (error) throw error;
       return data;
     },
-    enabled: !!id
+    enabled: !!id,
+    retry: 1,
+    onError: (error) => {
+      console.error('Error fetching subject:', error);
+    }
   });
 
   // Fetch evidence for this subject
-  const { data: evidence } = useQuery({
+  const { data: evidence, error: evidenceError } = useQuery({
     queryKey: ['subject-evidence', id],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -76,7 +80,11 @@ const SubjectDetail = () => {
       if (error) throw error;
       return data;
     },
-    enabled: !!subject?.tasks
+    enabled: !!subject?.tasks,
+    retry: 1,
+    onError: (error) => {
+      console.error('Error fetching subject evidence:', error);
+    }
   });
 
   const getStatusBadge = (status: TaskStatus | SubjectStatus | string) => {
@@ -176,6 +184,17 @@ const SubjectDetail = () => {
         <div className="flex items-center justify-center py-8">
           <Clock className="mr-2 h-4 w-4 animate-spin" />
           Cargando detalles de la OT...
+        </div>
+      </Layout>
+    );
+  }
+
+  if (error) {
+    return (
+      <Layout>
+        <div className="flex items-center justify-center py-8 text-destructive">
+          <AlertTriangle className="mr-2 h-4 w-4" />
+          Error al cargar la OT
         </div>
       </Layout>
     );
@@ -367,7 +386,11 @@ const SubjectDetail = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {!evidence || evidence.length === 0 ? (
+                {evidenceError ? (
+                  <p className="text-center py-8 text-destructive">
+                    Error al cargar las evidencias
+                  </p>
+                ) : !evidence || evidence.length === 0 ? (
                   <p className="text-center py-8 text-muted-foreground">
                     No hay evidencias registradas
                   </p>

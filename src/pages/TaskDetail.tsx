@@ -29,7 +29,7 @@ const TaskDetail = () => {
   const [formData, setFormData] = useState<any>({});
 
   // Fetch task details
-  const { data: task, isLoading } = useQuery({
+  const { data: task, isLoading, error } = useQuery({
     queryKey: ['task', id],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -77,7 +77,11 @@ const TaskDetail = () => {
       
       return data;
     },
-    enabled: !!id
+    enabled: !!id,
+    retry: 1,
+    onError: (error) => {
+      console.error('Error fetching task:', error);
+    }
   });
 
   // Update task mutation
@@ -308,6 +312,17 @@ const TaskDetail = () => {
         <div className="flex items-center justify-center py-8">
           <Clock className="mr-2 h-4 w-4 animate-spin" />
           Cargando detalles de la task...
+        </div>
+      </Layout>
+    );
+  }
+
+  if (error) {
+    return (
+      <Layout>
+        <div className="flex items-center justify-center py-8 text-destructive">
+          <AlertTriangle className="mr-2 h-4 w-4" />
+          Error al cargar la task
         </div>
       </Layout>
     );
