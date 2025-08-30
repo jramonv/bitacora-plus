@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Calendar, Clock, FileText, Image, BarChart3, Download, Plus, FileDown } from "lucide-react";
+import { Calendar, Clock, FileText, Image, BarChart3, Download, Plus, FileDown, AlertTriangle } from "lucide-react";
 import { Link } from "react-router-dom";
 import Layout from "@/components/Layout";
 import { format } from "date-fns";
@@ -80,6 +80,20 @@ const SubjectDetail = () => {
     enabled: !!subject?.tasks
   });
 
+  // Fetch incidents for this subject
+  const { data: incidents } = useQuery({
+    queryKey: ['subject-incidents', id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('incidents')
+        .select('*')
+        .eq('subject_id', id);
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!id
+  });
+
   const getStatusBadge = (status: TaskStatus | SubjectStatus | string) => {
     const variants = {
       'draft': { variant: 'outline' as const, label: 'Borrador' },
@@ -89,7 +103,9 @@ const SubjectDetail = () => {
       'pending': { variant: 'secondary' as const, label: 'Pendiente' },
       'in_progress': { variant: 'default' as const, label: 'En Progreso' },
       'completed': { variant: 'default' as const, label: 'Completada' },
-      'blocked': { variant: 'destructive' as const, label: 'Bloqueada' }
+      'blocked': { variant: 'destructive' as const, label: 'Bloqueada' },
+      'open': { variant: 'secondary' as const, label: 'Abierta' },
+      'resolved': { variant: 'default' as const, label: 'Resuelta' }
     };
     
     const config = variants[status as keyof typeof variants] || variants.draft;
@@ -237,6 +253,7 @@ const SubjectDetail = () => {
           <TabsList>
             <TabsTrigger value="timeline">Timeline</TabsTrigger>
             <TabsTrigger value="tasks">Tasks</TabsTrigger>
+            <TabsTrigger value="incidents">Incidencias</TabsTrigger>
             <TabsTrigger value="evidence">Evidencias</TabsTrigger>
             <TabsTrigger value="kpis">KPIs</TabsTrigger>
           </TabsList>
@@ -347,6 +364,61 @@ const SubjectDetail = () => {
                               <Button variant="outline" size="sm">
                                 Ver Detalle
                               </Button>
+                            </Link>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Incidents Tab */}
+          <TabsContent value="incidents">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  <span className="flex items-center">
+                    <AlertTriangle className="mr-2 h-4 w-4" />
+                    Incidencias
+                  </span>
+                  <Link to={`/incidents/new?subject_id=${id}`}>
+                    <Button size="sm">
+                      <Plus className="mr-2 h-4 w-4" /> Nueva incidencia
+                    </Button>
+                  </Link>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Categoría</TableHead>
+                      <TableHead>Estado</TableHead>
+                      <TableHead>Creada</TableHead>
+                      <TableHead className="text-right">Acciones</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {!incidents || incidents.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
+                          No hay incidencias registradas
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      incidents.map((inc: any) => (
+                        <TableRow key={inc.id}>
+                          <TableCell>{inc.category}</TableCell>
+                          <TableCell>{getStatusBadge(inc.status)}</TableCell>
+                          <TableCell>
+                            {inc.created_at ? format(new Date(inc.created_at), 'dd/MM/yyyy', { locale: es }) : '-'}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <Link to={`/incidents/${inc.id}`}>
+                              <Button variant="outline" size="sm">Ver</Button>
                             </Link>
                           </TableCell>
                         </TableRow>
