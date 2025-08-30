@@ -10,6 +10,7 @@ import Layout from "@/components/Layout";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { TaskStatus, castAIFlags } from "@/types/database";
+import { EmptyState } from "@/components/EmptyState";
 
 const Dashboard = () => {
   // Fetch KPI data
@@ -25,6 +26,7 @@ const Dashboard = () => {
           due_date,
           completed_at,
           ai_risk,
+          ai_flags,
           subjects (
             id,
             title,
@@ -50,9 +52,13 @@ const Dashboard = () => {
         t.status !== 'completed'
       ).length || 0;
       
-      const atRisk = tasks?.filter(t => 
-        t.status !== 'completed' && 
-        ((t.due_date && new Date(t.due_date) < today) || (t.ai_risk && t.ai_risk > 70))
+      const atRisk = tasks?.filter(t =>
+        t.status !== 'completed' &&
+        (
+          (t.due_date && new Date(t.due_date) < today) ||
+          (t.ai_risk && t.ai_risk > 70) ||
+          castAIFlags(t.ai_flags).length > 0
+        )
       ).length || 0;
 
       return {
@@ -60,9 +66,13 @@ const Dashboard = () => {
         compliancePercentage: total > 0 ? Math.round((completed / total) * 100) : 0,
         duesToday,
         atRisk,
-        riskyTasks: tasks?.filter(t => 
-          t.status !== 'completed' && 
-          ((t.due_date && new Date(t.due_date) < today) || (t.ai_risk && t.ai_risk > 70))
+        riskyTasks: tasks?.filter(t =>
+          t.status !== 'completed' &&
+          (
+            (t.due_date && new Date(t.due_date) < today) ||
+            (t.ai_risk && t.ai_risk > 70) ||
+            castAIFlags(t.ai_flags).length > 0
+          )
         ).slice(0, 10) || []
       };
     }
@@ -83,9 +93,21 @@ const Dashboard = () => {
   const getRiskLevel = (task: any) => {
     const isOverdue = task.due_date && new Date(task.due_date) < new Date();
     const hasHighRisk = task.ai_risk && task.ai_risk > 70;
-    
+    const flags = castAIFlags(task.ai_flags);
+
     if (isOverdue) return { level: 'Vencida', color: 'text-destructive' };
     if (hasHighRisk) return { level: 'Alto Riesgo', color: 'text-orange-500' };
+    if (flags.length > 0) {
+      const flagLabels: Record<string, string> = {
+        missing_geotag: 'Sin Geotag',
+        insufficient_photos: 'Fotos Insuf.',
+        duplicate_photo: 'Foto Duplicada',
+        missing_signature: 'Sin Firma',
+        checklist_incomplete: 'Checklist Inc.'
+      };
+      const firstFlag = flags[0];
+      return { level: flagLabels[firstFlag] || 'Observación', color: 'text-orange-500' };
+    }
     return { level: 'En Riesgo', color: 'text-yellow-600' };
   };
 
@@ -195,8 +217,19 @@ const Dashboard = () => {
                 <TableBody>
                   {kpiData?.riskyTasks.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                        No hay tasks en riesgo
+                      <TableCell colSpan={6}>
+                        <EmptyState
+                          icon={CheckCircle}
+                          message="No hay tasks en riesgo"
+                          action={
+                            <Link to="/subjects">
+                              <Button>
+                                <Plus className="mr-2 h-4 w-4" />
+                                Nueva OT
+                              </Button>
+                            </Link>
+                          }
+                        />
                       </TableCell>
                     </TableRow>
                   ) : (

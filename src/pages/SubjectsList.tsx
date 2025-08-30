@@ -9,13 +9,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { CalendarIcon, Search, Filter, Plus, Clock } from "lucide-react";
+import { CalendarIcon, Search, Filter, Plus, Clock, FileText } from "lucide-react";
 import { Link } from "react-router-dom";
 import Layout from "@/components/Layout";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { SubjectStatus } from "@/types/database";
+import { EmptyState } from "@/components/EmptyState";
 
 const SubjectsList = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -220,8 +221,17 @@ const SubjectsList = () => {
                 <TableBody>
                   {!subjects || subjects.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                        No se encontraron órdenes de trabajo
+                      <TableCell colSpan={6}>
+                        <EmptyState
+                          icon={FileText}
+                          message="No se encontraron órdenes de trabajo"
+                          action={
+                            <Button>
+                              <Plus className="mr-2 h-4 w-4" />
+                              Nueva OT
+                            </Button>
+                          }
+                        />
                       </TableCell>
                     </TableRow>
                   ) : (
