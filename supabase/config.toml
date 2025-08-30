@@ -62,3 +62,6 @@ inspector_port = 8083
 
 [functions.send-due-task-alerts]
 verify_jwt = false
+
+[functions.export-task-pdf]
+verify_jwt = true

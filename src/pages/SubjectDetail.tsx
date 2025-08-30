@@ -6,15 +6,17 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Calendar, Clock, FileText, Image, BarChart3, Download, Plus } from "lucide-react";
+import { Calendar, Clock, FileText, Image, BarChart3, Download, Plus, FileDown } from "lucide-react";
 import { Link } from "react-router-dom";
 import Layout from "@/components/Layout";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { TaskStatus, SubjectStatus, castAIFlags } from "@/types/database";
+import { useToast } from "@/hooks/use-toast";
 
 const SubjectDetail = () => {
   const { id } = useParams<{ id: string }>();
+  const { toast } = useToast();
 
   // Fetch subject details
   const { data: subject, isLoading } = useQuery({
@@ -107,8 +109,65 @@ const SubjectDetail = () => {
   };
 
   const exportToPDF = async () => {
-    // TODO: Implement PDF export functionality
-    console.log('Exporting subject to PDF...');
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast({
+          title: "Error",
+          description: "Debe iniciar sesión para exportar PDF",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Get all task IDs from the subject
+      const taskIds = subject?.tasks?.map(t => t.id) || [];
+      if (taskIds.length === 0) {
+        toast({
+          title: "Sin tareas",
+          description: "No hay tareas para exportar",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // For now, export the first task. Later we can implement multi-task export
+      const firstTaskId = taskIds[0];
+      
+      const response = await fetch(`https://eeprxrlmcbtywuuwnuex.supabase.co/functions/v1/export-task-pdf/${firstTaskId}.pdf`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Error al generar PDF');
+      }
+
+      // Download the PDF
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `subject-${id}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+
+      toast({
+        title: "PDF exportado",
+        description: "El archivo se descargó correctamente",
+      });
+    } catch (error) {
+      console.error('Error exporting PDF:', error);
+      toast({
+        title: "Error",
+        description: "No se pudo exportar el PDF",
+        variant: "destructive",
+      });
+    }
   };
 
   if (isLoading) {

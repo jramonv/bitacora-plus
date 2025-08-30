@@ -12,7 +12,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
-import { CalendarIcon, Clock, Upload, FileText, Download, Lock, CheckCircle, AlertTriangle, MapPin, Signature } from "lucide-react";
+import { CalendarIcon, Clock, Upload, FileText, Download, Lock, CheckCircle, AlertTriangle, MapPin, Signature, FileDown } from "lucide-react";
 import Layout from "@/components/Layout";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -255,8 +255,51 @@ const TaskDetail = () => {
   };
 
   const exportToPDF = async () => {
-    // TODO: Implement PDF export functionality
-    console.log('Exporting task to PDF...');
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast({
+          title: "Error",
+          description: "Debe iniciar sesión para exportar PDF",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const response = await fetch(`https://eeprxrlmcbtywuuwnuex.supabase.co/functions/v1/export-task-pdf/${id}.pdf`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Error al generar PDF');
+      }
+
+      // Download the PDF
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `task-${id}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+
+      toast({
+        title: "PDF exportado",
+        description: "El archivo se descargó correctamente",
+      });
+    } catch (error) {
+      console.error('Error exporting PDF:', error);
+      toast({
+        title: "Error",
+        description: "No se pudo exportar el PDF",
+        variant: "destructive",
+      });
+    }
   };
 
   if (isLoading) {
