@@ -1003,6 +1003,10 @@ export type Database = {
         Args: { p_key_id: string }
         Returns: boolean
       }
+      trigger_ai_dispatcher: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
       verify_api_key: {
         Args: { p_api_key: string }
         Returns: {

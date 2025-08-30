@@ -83,3 +83,6 @@ verify_jwt = false
 
 [functions.ai-dispatcher]
 verify_jwt = false
+
+[functions.ai-test-setup]
+verify_jwt = false
