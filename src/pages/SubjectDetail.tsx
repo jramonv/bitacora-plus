@@ -224,10 +224,14 @@ const SubjectDetail = () => {
               <Download className="mr-2 h-4 w-4" />
               Exportar PDF
             </Button>
-            <Button>
-              <Plus className="mr-2 h-4 w-4" />
-              Nueva Task
-            </Button>
+            {subject && (
+              <Link to={`/tasks/new?subjectId=${subject.id}`}>
+                <Button>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Nueva Task
+                </Button>
+              </Link>
+            )}
           </div>
         </div>
 

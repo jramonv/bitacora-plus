@@ -277,9 +277,11 @@ const SubjectsList = () => {
                                   Ver Detalle
                                 </Button>
                               </Link>
-                              <Button variant="outline" size="sm">
-                                Nueva Task
-                              </Button>
+                              <Link to={`/tasks/new?subjectId=${subject.id}`}>
+                                <Button variant="outline" size="sm">
+                                  Nueva Task
+                                </Button>
+                              </Link>
                             </div>
                           </TableCell>
                         </TableRow>
