@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { invokeFunction } from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -19,7 +20,11 @@ import { es } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
 import { TaskStatus, RequiredEvidence, castRequiredEvidence } from "@/types/database";
 import { EvidenceUpload } from "@/components/EvidenceUpload";
+
 import { Task, LogEntry } from "@/types/entities";
+=
+import { EmptyState } from "@/components/EmptyState";
+
 
 const TaskDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -267,7 +272,7 @@ const TaskDetail = () => {
         return;
       }
 
-      const response = await fetch(`https://eeprxrlmcbtywuuwnuex.supabase.co/functions/v1/export-task-pdf/${id}.pdf`, {
+      const response = await invokeFunction(`export-task-pdf/${id}.pdf`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${session.access_token}`,
@@ -332,7 +337,7 @@ const TaskDetail = () => {
 
   return (
     <Layout>
-      <div className="space-y-6">
+      <div className="space-y-6 pb-24">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
@@ -349,25 +354,6 @@ const TaskDetail = () => {
               <Download className="mr-2 h-4 w-4" />
               Exportar PDF
             </Button>
-            {task.status !== 'completed' && (
-              <Button 
-                onClick={handleClose} 
-                disabled={!canClose()}
-                className={canClose() ? '' : 'opacity-50 cursor-not-allowed'}
-              >
-                {canClose() ? (
-                  <>
-                    <CheckCircle className="mr-2 h-4 w-4" />
-                    Cerrar Task
-                  </>
-                ) : (
-                  <>
-                    <Lock className="mr-2 h-4 w-4" />
-                    Cerrar Task
-                  </>
-                )}
-              </Button>
-            )}
           </div>
         </div>
 
@@ -623,9 +609,15 @@ const TaskDetail = () => {
                 {/* Evidence List */}
                 <div className="space-y-2 mt-4">
                   {evidence.length === 0 ? (
-                    <p className="text-center py-4 text-muted-foreground">
-                      No hay evidencias subidas
-                    </p>
+                    <EmptyState
+                      icon={FileText}
+                      message="No hay evidencias subidas"
+                      action={
+                        <Button onClick={() => document.querySelector('input[type="file"]')?.click()}>
+                          Subir evidencia
+                        </Button>
+                      }
+                    />
                   ) : (
                     evidence.map((item) => (
                       <div key={item.id} className="flex items-center justify-between p-2 border rounded">
@@ -654,6 +646,38 @@ const TaskDetail = () => {
           </div>
         </div>
       </div>
+      {task.status !== 'completed' && (
+        <div
+          className="sticky bottom-0 left-0 right-0 w-full bg-background border-t z-50"
+          style={{
+            paddingBottom: "calc(env(safe-area-inset-bottom) + 1rem)",
+            paddingLeft: "calc(env(safe-area-inset-left) + 1rem)",
+            paddingRight: "calc(env(safe-area-inset-right) + 1rem)",
+            paddingTop: "1rem",
+          }}
+        >
+          <Button
+            onClick={handleClose}
+            disabled={!canClose()}
+            className={cn(
+              "w-full h-11",
+              !canClose() && "opacity-50 cursor-not-allowed"
+            )}
+          >
+            {canClose() ? (
+              <>
+                <CheckCircle className="mr-2 h-4 w-4" />
+                Cerrar Task
+              </>
+            ) : (
+              <>
+                <Lock className="mr-2 h-4 w-4" />
+                Cerrar Task
+              </>
+            )}
+          </Button>
+        </div>
+      )}
     </Layout>
   );
 };

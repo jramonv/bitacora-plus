@@ -71,3 +71,7 @@ Yes, you can!
 To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
 
 Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+
+## Landing page and app deployment
+
+This repository now includes a simple marketing landing page located in `landing/`. The Vite configuration builds both the landing and the main application. Deploy the contents of `dist/landing` to your main domain and serve the app from `/app` or `app.yourdomain.com`.
