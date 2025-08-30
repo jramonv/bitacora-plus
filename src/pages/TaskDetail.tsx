@@ -19,6 +19,7 @@ import { es } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
 import { TaskStatus, RequiredEvidence, castRequiredEvidence } from "@/types/database";
 import { EvidenceUpload } from "@/components/EvidenceUpload";
+import { TaskComments } from "@/components/TaskComments";
 
 const TaskDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -650,9 +651,11 @@ const TaskDetail = () => {
                 </div>
               </CardContent>
             </Card>
-          </div>
+      </div>
         </div>
       </div>
+
+      <TaskComments taskId={id!} />
     </Layout>
   );
 };
