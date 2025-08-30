@@ -6,7 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Calendar, Clock, FileText, Image, BarChart3, Download, Plus, FileDown } from "lucide-react";
+import { Calendar, Clock, FileText, Image, BarChart3, Download, Plus, FileDown, MapPin } from "lucide-react";
+import { MapView } from "@/components/MapView";
 import { Link } from "react-router-dom";
 import Layout from "@/components/Layout";
 import { format } from "date-fns";
@@ -64,6 +65,9 @@ const SubjectDetail = () => {
           filename,
           file_path,
           kind,
+          latitude,
+          longitude,
+          created_by,
           created_at,
           metadata,
           tasks (
@@ -237,6 +241,7 @@ const SubjectDetail = () => {
             <TabsTrigger value="timeline">Timeline</TabsTrigger>
             <TabsTrigger value="tasks">Tasks</TabsTrigger>
             <TabsTrigger value="evidence">Evidencias</TabsTrigger>
+            <TabsTrigger value="map">Mapa</TabsTrigger>
             <TabsTrigger value="kpis">KPIs</TabsTrigger>
           </TabsList>
 
@@ -393,6 +398,21 @@ const SubjectDetail = () => {
                     ))}
                   </div>
                 )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Map Tab */}
+          <TabsContent value="map">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <MapPin className="mr-2 h-4 w-4" />
+                  Mapa de Evidencias
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <MapView evidence={evidence || []} />
               </CardContent>
             </Card>
           </TabsContent>

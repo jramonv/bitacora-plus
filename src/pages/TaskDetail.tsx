@@ -11,6 +11,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import { CalendarIcon, Clock, Upload, FileText, Download, Lock, CheckCircle, AlertTriangle, MapPin, Signature, FileDown } from "lucide-react";
 import Layout from "@/components/Layout";
@@ -19,6 +20,7 @@ import { es } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
 import { TaskStatus, RequiredEvidence, castRequiredEvidence } from "@/types/database";
 import { EvidenceUpload } from "@/components/EvidenceUpload";
+import { MapView } from "@/components/MapView";
 
 const TaskDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -58,6 +60,7 @@ const TaskDetail = () => {
             kind,
             latitude,
             longitude,
+            created_by,
             created_at
           )
         `)
@@ -207,7 +210,7 @@ const TaskDetail = () => {
     
     // 2. Check geotag requirement
     if (required.geotag_required) {
-      const hasGeotag = evidence.some(e => e.latitude && e.longitude);
+      const hasGeotag = evidence.some(e => e.latitude !== null && e.longitude !== null);
       if (!hasGeotag) {
         errors.push('Se requiere al menos una evidencia con geolocalización');
       }
@@ -326,7 +329,7 @@ const TaskDetail = () => {
   const evidence = task.evidence || [];
   const required = castRequiredEvidence(task.required_evidence);
   const photoCount = evidence.filter(e => e.kind === 'photo').length;
-  const hasGeotag = evidence.some(e => e.latitude && e.longitude);
+  const hasGeotag = evidence.some(e => e.latitude !== null && e.longitude !== null);
   const hasSignature = evidence.some(e => e.kind === 'pdf');
 
   return (
@@ -611,43 +614,54 @@ const TaskDetail = () => {
                 <CardTitle>Evidencias</CardTitle>
               </CardHeader>
               <CardContent>
-                <EvidenceUpload
-                  taskId={id!}
-                  tenantId={task.tenant_id}
-                  subjectId={task.subject_id}
-                  onUploadComplete={() => queryClient.invalidateQueries({ queryKey: ['task', id] })}
-                  disabled={task.status === 'completed'}
-                />
+                <Tabs defaultValue="list" className="w-full">
+                  <TabsList>
+                    <TabsTrigger value="list">Lista</TabsTrigger>
+                    <TabsTrigger value="map">Mapa</TabsTrigger>
+                  </TabsList>
+                  <TabsContent value="list">
+                    <EvidenceUpload
+                      taskId={id!}
+                      tenantId={task.tenant_id}
+                      subjectId={task.subject_id}
+                      onUploadComplete={() => queryClient.invalidateQueries({ queryKey: ['task', id] })}
+                      disabled={task.status === 'completed'}
+                    />
 
-                {/* Evidence List */}
-                <div className="space-y-2 mt-4">
-                  {evidence.length === 0 ? (
-                    <p className="text-center py-4 text-muted-foreground">
-                      No hay evidencias subidas
-                    </p>
-                  ) : (
-                    evidence.map((item) => (
-                      <div key={item.id} className="flex items-center justify-between p-2 border rounded">
-                        <div className="flex items-center space-x-2">
-                          {item.kind === 'photo' ? (
-                            <FileText className="h-4 w-4" />
-                          ) : (
-                            <FileText className="h-4 w-4" />
-                          )}
-                          <div>
-                            <p className="text-sm font-medium">{item.filename}</p>
-                            <p className="text-xs text-muted-foreground">
-                              {format(new Date(item.created_at), 'dd/MM/yyyy HH:mm', { locale: es })}
-                              {item.latitude && item.longitude && (
-                                <span className="ml-2 text-green-600">📍 Geotagged</span>
+                    {/* Evidence List */}
+                    <div className="space-y-2 mt-4">
+                      {evidence.length === 0 ? (
+                        <p className="text-center py-4 text-muted-foreground">
+                          No hay evidencias subidas
+                        </p>
+                      ) : (
+                        evidence.map((item) => (
+                          <div key={item.id} className="flex items-center justify-between p-2 border rounded">
+                            <div className="flex items-center space-x-2">
+                              {item.kind === 'photo' ? (
+                                <FileText className="h-4 w-4" />
+                              ) : (
+                                <FileText className="h-4 w-4" />
                               )}
-                            </p>
+                              <div>
+                                <p className="text-sm font-medium">{item.filename}</p>
+                                <p className="text-xs text-muted-foreground">
+                                  {format(new Date(item.created_at), 'dd/MM/yyyy HH:mm', { locale: es })}
+                                  {item.latitude !== null && item.longitude !== null && (
+                                    <span className="ml-2 text-green-600">📍 Geotagged</span>
+                                  )}
+                                </p>
+                              </div>
+                            </div>
                           </div>
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
+                        ))
+                      )}
+                    </div>
+                  </TabsContent>
+                  <TabsContent value="map">
+                    <MapView evidence={evidence} />
+                  </TabsContent>
+                </Tabs>
               </CardContent>
             </Card>
           </div>
