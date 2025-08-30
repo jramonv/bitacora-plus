@@ -26,6 +26,7 @@ const Dashboard = () => {
           due_date,
           completed_at,
           ai_risk,
+          ai_flags,
           subjects (
             id,
             title,
@@ -51,9 +52,13 @@ const Dashboard = () => {
         t.status !== 'completed'
       ).length || 0;
       
-      const atRisk = tasks?.filter(t => 
-        t.status !== 'completed' && 
-        ((t.due_date && new Date(t.due_date) < today) || (t.ai_risk && t.ai_risk > 70))
+      const atRisk = tasks?.filter(t =>
+        t.status !== 'completed' &&
+        (
+          (t.due_date && new Date(t.due_date) < today) ||
+          (t.ai_risk && t.ai_risk > 70) ||
+          castAIFlags(t.ai_flags).length > 0
+        )
       ).length || 0;
 
       return {
@@ -61,9 +66,13 @@ const Dashboard = () => {
         compliancePercentage: total > 0 ? Math.round((completed / total) * 100) : 0,
         duesToday,
         atRisk,
-        riskyTasks: tasks?.filter(t => 
-          t.status !== 'completed' && 
-          ((t.due_date && new Date(t.due_date) < today) || (t.ai_risk && t.ai_risk > 70))
+        riskyTasks: tasks?.filter(t =>
+          t.status !== 'completed' &&
+          (
+            (t.due_date && new Date(t.due_date) < today) ||
+            (t.ai_risk && t.ai_risk > 70) ||
+            castAIFlags(t.ai_flags).length > 0
+          )
         ).slice(0, 10) || []
       };
     }
@@ -84,9 +93,21 @@ const Dashboard = () => {
   const getRiskLevel = (task: any) => {
     const isOverdue = task.due_date && new Date(task.due_date) < new Date();
     const hasHighRisk = task.ai_risk && task.ai_risk > 70;
-    
+    const flags = castAIFlags(task.ai_flags);
+
     if (isOverdue) return { level: 'Vencida', color: 'text-destructive' };
     if (hasHighRisk) return { level: 'Alto Riesgo', color: 'text-orange-500' };
+    if (flags.length > 0) {
+      const flagLabels: Record<string, string> = {
+        missing_geotag: 'Sin Geotag',
+        insufficient_photos: 'Fotos Insuf.',
+        duplicate_photo: 'Foto Duplicada',
+        missing_signature: 'Sin Firma',
+        checklist_incomplete: 'Checklist Inc.'
+      };
+      const firstFlag = flags[0];
+      return { level: flagLabels[firstFlag] || 'Observación', color: 'text-orange-500' };
+    }
     return { level: 'En Riesgo', color: 'text-yellow-600' };
   };
 
