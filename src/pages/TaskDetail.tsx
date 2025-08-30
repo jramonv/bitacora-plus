@@ -331,7 +331,7 @@ const TaskDetail = () => {
 
   return (
     <Layout>
-      <div className="space-y-6">
+      <div className="space-y-6 pb-24">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
@@ -348,25 +348,6 @@ const TaskDetail = () => {
               <Download className="mr-2 h-4 w-4" />
               Exportar PDF
             </Button>
-            {task.status !== 'completed' && (
-              <Button 
-                onClick={handleClose} 
-                disabled={!canClose()}
-                className={canClose() ? '' : 'opacity-50 cursor-not-allowed'}
-              >
-                {canClose() ? (
-                  <>
-                    <CheckCircle className="mr-2 h-4 w-4" />
-                    Cerrar Task
-                  </>
-                ) : (
-                  <>
-                    <Lock className="mr-2 h-4 w-4" />
-                    Cerrar Task
-                  </>
-                )}
-              </Button>
-            )}
           </div>
         </div>
 
@@ -653,6 +634,38 @@ const TaskDetail = () => {
           </div>
         </div>
       </div>
+      {task.status !== 'completed' && (
+        <div
+          className="sticky bottom-0 left-0 right-0 w-full bg-background border-t z-50"
+          style={{
+            paddingBottom: "calc(env(safe-area-inset-bottom) + 1rem)",
+            paddingLeft: "calc(env(safe-area-inset-left) + 1rem)",
+            paddingRight: "calc(env(safe-area-inset-right) + 1rem)",
+            paddingTop: "1rem",
+          }}
+        >
+          <Button
+            onClick={handleClose}
+            disabled={!canClose()}
+            className={cn(
+              "w-full h-11",
+              !canClose() && "opacity-50 cursor-not-allowed"
+            )}
+          >
+            {canClose() ? (
+              <>
+                <CheckCircle className="mr-2 h-4 w-4" />
+                Cerrar Task
+              </>
+            ) : (
+              <>
+                <Lock className="mr-2 h-4 w-4" />
+                Cerrar Task
+              </>
+            )}
+          </Button>
+        </div>
+      )}
     </Layout>
   );
 };
