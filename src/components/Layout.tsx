@@ -3,13 +3,14 @@ import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { 
-  LayoutDashboard, 
-  FileText, 
-  CheckSquare, 
-  Settings, 
+import {
+  LayoutDashboard,
+  FileText,
+  CheckSquare,
+  Settings,
   Menu,
-  Home
+  Home,
+  ListCheck
 } from "lucide-react";
 
 interface LayoutProps {
@@ -22,6 +23,7 @@ const Layout = ({ children }: LayoutProps) => {
   const navigation = [
     { name: "Inicio", href: "/", icon: Home },
     { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+    { name: "Mis Tareas", href: "/worker", icon: ListCheck },
     { name: "OTs", href: "/subjects", icon: FileText },
   ];
 

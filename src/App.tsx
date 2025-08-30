@@ -8,6 +8,7 @@ import Dashboard from "./pages/Dashboard";
 import SubjectsList from "./pages/SubjectsList";
 import SubjectDetail from "./pages/SubjectDetail";
 import TaskDetail from "./pages/TaskDetail";
+import WorkerDashboard from "./pages/WorkerDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -21,6 +22,7 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/worker" element={<WorkerDashboard />} />
           <Route path="/subjects" element={<SubjectsList />} />
           <Route path="/subjects/:id" element={<SubjectDetail />} />
           <Route path="/tasks/:id" element={<TaskDetail />} />
