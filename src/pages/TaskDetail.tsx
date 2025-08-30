@@ -19,6 +19,7 @@ import { es } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
 import { TaskStatus, RequiredEvidence, castRequiredEvidence } from "@/types/database";
 import { EvidenceUpload } from "@/components/EvidenceUpload";
+import { EmptyState } from "@/components/EmptyState";
 
 const TaskDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -622,9 +623,15 @@ const TaskDetail = () => {
                 {/* Evidence List */}
                 <div className="space-y-2 mt-4">
                   {evidence.length === 0 ? (
-                    <p className="text-center py-4 text-muted-foreground">
-                      No hay evidencias subidas
-                    </p>
+                    <EmptyState
+                      icon={FileText}
+                      message="No hay evidencias subidas"
+                      action={
+                        <Button onClick={() => document.querySelector('input[type="file"]')?.click()}>
+                          Subir evidencia
+                        </Button>
+                      }
+                    />
                   ) : (
                     evidence.map((item) => (
                       <div key={item.id} className="flex items-center justify-between p-2 border rounded">

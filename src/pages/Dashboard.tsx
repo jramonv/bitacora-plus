@@ -10,6 +10,7 @@ import Layout from "@/components/Layout";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { TaskStatus, castAIFlags } from "@/types/database";
+import { EmptyState } from "@/components/EmptyState";
 
 const Dashboard = () => {
   // Fetch KPI data
@@ -195,8 +196,19 @@ const Dashboard = () => {
                 <TableBody>
                   {kpiData?.riskyTasks.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                        No hay tasks en riesgo
+                      <TableCell colSpan={6}>
+                        <EmptyState
+                          icon={CheckCircle}
+                          message="No hay tasks en riesgo"
+                          action={
+                            <Link to="/subjects">
+                              <Button>
+                                <Plus className="mr-2 h-4 w-4" />
+                                Nueva OT
+                              </Button>
+                            </Link>
+                          }
+                        />
                       </TableCell>
                     </TableRow>
                   ) : (
