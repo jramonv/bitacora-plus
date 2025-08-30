@@ -1,6 +1,7 @@
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { invokeFunction } from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -134,7 +135,7 @@ const SubjectDetail = () => {
       // For now, export the first task. Later we can implement multi-task export
       const firstTaskId = taskIds[0];
       
-      const response = await fetch(`https://eeprxrlmcbtywuuwnuex.supabase.co/functions/v1/export-task-pdf/${firstTaskId}.pdf`, {
+      const response = await invokeFunction(`export-task-pdf/${firstTaskId}.pdf`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${session.access_token}`,

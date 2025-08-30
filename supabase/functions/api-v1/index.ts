@@ -12,32 +12,53 @@ const supabase = createClient(
   Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
 );
 
-// Rate limiting map (in-memory for simple implementation)
-const rateLimits = new Map<string, { count: number; resetTime: number }>();
+// Rate limiting using Supabase table
+// Expected table structure:
+// rate_limits (key text primary key, count bigint, reset_time bigint)
+
+async function incrementRateLimit(key: string) {
+  const now = Date.now();
+  const windowMs = 60 * 1000; // 1 minute
+  const defaultResetTime = now + windowMs;
+
+  const { data, error } = await supabase
+    .from('rate_limits')
+    .select('count, reset_time')
+    .eq('key', key)
+    .single();
+
+  let count = 1;
+  let resetTime = defaultResetTime;
+
+  if (!error && data) {
+    if (now > data.reset_time) {
+      count = 1;
+      resetTime = defaultResetTime;
+    } else {
+      count = data.count + 1;
+      resetTime = data.reset_time;
+    }
+  }
+
+  await supabase.from('rate_limits').upsert({
+    key,
+    count,
+    reset_time: resetTime
+  });
+
+  return { count, resetTime };
+}
+
+async function checkRateLimit(key: string) {
+  const maxRequests = 300;
+  const { count } = await incrementRateLimit(key);
+  return count <= maxRequests;
+}
 
 interface AuthContext {
   tenantId: string;
   userId?: string;
   apiKeyId?: string;
-}
-
-// Middleware: Rate limiting
-function checkRateLimit(key: string): boolean {
-  const now = Date.now();
-  const windowMs = 60 * 1000; // 1 minute
-  const maxRequests = 300;
-
-  const current = rateLimits.get(key) || { count: 0, resetTime: now + windowMs };
-  
-  if (now > current.resetTime) {
-    current.count = 1;
-    current.resetTime = now + windowMs;
-  } else {
-    current.count++;
-  }
-  
-  rateLimits.set(key, current);
-  return current.count <= maxRequests;
 }
 
 // Middleware: Authentication
@@ -162,7 +183,7 @@ serve(async (req: Request) => {
   const auth = await authenticate(req);
   const rateLimitKey = auth?.tenantId || req.headers.get('x-forwarded-for') || 'anonymous';
   
-  if (!checkRateLimit(rateLimitKey)) {
+  if (!(await checkRateLimit(rateLimitKey))) {
     await logRequest(auth, req, 429, startTime);
     return errorResponse('rate_limit_exceeded', 'Rate Limit Exceeded', 'Too many requests', 429);
   }

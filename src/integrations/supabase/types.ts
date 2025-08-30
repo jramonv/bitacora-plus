@@ -1027,7 +1027,7 @@ export type Database = {
       evidence_kind: "photo" | "pdf"
       subject_status: "draft" | "active" | "closed" | "cancelled"
       task_status: "pending" | "in_progress" | "completed" | "blocked"
-      user_role: "owner" | "editor" | "viewer"
+      user_role: "jefe" | "operador"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1167,7 +1167,7 @@ export const Constants = {
       evidence_kind: ["photo", "pdf"],
       subject_status: ["draft", "active", "closed", "cancelled"],
       task_status: ["pending", "in_progress", "completed", "blocked"],
-      user_role: ["owner", "editor", "viewer"],
+      user_role: ["jefe", "operador"],
     },
   },
 } as const
