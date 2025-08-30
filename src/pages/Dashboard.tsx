@@ -5,13 +5,22 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Calendar, AlertTriangle, CheckCircle, Clock, Plus } from "lucide-react";
+import KpiCard from "@/components/KpiCard";
 import { Link } from "react-router-dom";
 import Layout from "@/components/Layout";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { TaskStatus, castAIFlags } from "@/types/database";
+import { TaskStatus } from "@/types/database";
 
 const Dashboard = () => {
+  const subjectTypes = [
+    { key: 'project', label: 'Proyectos' },
+    { key: 'research', label: 'Investigación' },
+    { key: 'maintenance', label: 'Mantenimiento' },
+    { key: 'health', label: 'Salud' },
+    { key: 'education', label: 'Educación' },
+    { key: 'personal', label: 'Personal' },
+  ];
   // Fetch KPI data
   const { data: kpiData, isLoading: kpiLoading } = useQuery({
     queryKey: ['dashboard-kpis'],
@@ -28,44 +37,103 @@ const Dashboard = () => {
           subjects (
             id,
             title,
-            status
+            status,
+            subject_type
           )
         `);
-      
+
       if (error) throw error;
 
-      const total = tasks?.length || 0;
-      const completed = tasks?.filter(t => t.status === 'completed').length || 0;
-      const onTime = tasks?.filter(t => 
-        t.status === 'completed' && 
-        t.completed_at && 
-        t.due_date && 
-        new Date(t.completed_at) <= new Date(t.due_date)
-      ).length || 0;
-      
       const today = new Date();
-      const duesToday = tasks?.filter(t => 
-        t.due_date && 
-        format(new Date(t.due_date), 'yyyy-MM-dd') === format(today, 'yyyy-MM-dd') &&
-        t.status !== 'completed'
-      ).length || 0;
-      
-      const atRisk = tasks?.filter(t => 
-        t.status !== 'completed' && 
-        ((t.due_date && new Date(t.due_date) < today) || (t.ai_risk && t.ai_risk > 70))
-      ).length || 0;
 
-      return {
-        onTimePercentage: completed > 0 ? Math.round((onTime / completed) * 100) : 0,
-        compliancePercentage: total > 0 ? Math.round((completed / total) * 100) : 0,
-        duesToday,
-        atRisk,
-        riskyTasks: tasks?.filter(t => 
-          t.status !== 'completed' && 
-          ((t.due_date && new Date(t.due_date) < today) || (t.ai_risk && t.ai_risk > 70))
-        ).slice(0, 10) || []
+      const overallCounts = {
+        total: 0,
+        completed: 0,
+        onTime: 0,
+        duesToday: 0,
+        atRisk: 0,
+        riskyTasks: [] as any[],
       };
-    }
+
+      const typeCounts: Record<string, typeof overallCounts> = {};
+
+      tasks?.forEach((t) => {
+        const type = t.subjects?.subject_type || 'other';
+        if (!typeCounts[type]) {
+          typeCounts[type] = {
+            total: 0,
+            completed: 0,
+            onTime: 0,
+            duesToday: 0,
+            atRisk: 0,
+            riskyTasks: [],
+          };
+        }
+
+        const buckets = [overallCounts, typeCounts[type]];
+        buckets.forEach((b) => {
+          b.total++;
+          if (t.status === 'completed') {
+            b.completed++;
+            if (
+              t.completed_at &&
+              t.due_date &&
+              new Date(t.completed_at) <= new Date(t.due_date)
+            ) {
+              b.onTime++;
+            }
+          } else {
+            if (
+              t.due_date &&
+              format(new Date(t.due_date), 'yyyy-MM-dd') ===
+                format(today, 'yyyy-MM-dd')
+            ) {
+              b.duesToday++;
+            }
+            if (
+              (t.due_date && new Date(t.due_date) < today) ||
+              (t.ai_risk && t.ai_risk > 70)
+            ) {
+              b.atRisk++;
+              b.riskyTasks.push(t);
+            }
+          }
+        });
+      });
+
+      const overall = {
+        onTimePercentage:
+          overallCounts.completed > 0
+            ? Math.round((overallCounts.onTime / overallCounts.completed) * 100)
+            : 0,
+        compliancePercentage:
+          overallCounts.total > 0
+            ? Math.round((overallCounts.completed / overallCounts.total) * 100)
+            : 0,
+        duesToday: overallCounts.duesToday,
+        atRisk: overallCounts.atRisk,
+        riskyTasks: overallCounts.riskyTasks.slice(0, 10),
+      };
+
+      const byType: Record<string, typeof overall> = {};
+      Object.entries(typeCounts).forEach(([type, counts]) => {
+        byType[type] = {
+          onTimePercentage:
+            counts.completed > 0
+              ? Math.round((counts.onTime / counts.completed) * 100)
+              : 0,
+          compliancePercentage:
+            counts.total > 0
+              ? Math.round((counts.completed / counts.total) * 100)
+              : 0,
+          duesToday: counts.duesToday,
+          atRisk: counts.atRisk,
+          riskyTasks: counts.riskyTasks.slice(0, 10),
+        };
+      });
+
+      return { overall, byType };
+    },
   });
 
   const getStatusBadge = (status: TaskStatus | string) => {
@@ -115,7 +183,7 @@ const Dashboard = () => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {kpiLoading ? '-' : `${kpiData?.onTimePercentage || 0}%`}
+                {kpiLoading ? '-' : `${kpiData?.overall.onTimePercentage || 0}%`}
               </div>
               <p className="text-xs text-muted-foreground">
                 Tareas completadas a tiempo
@@ -130,7 +198,7 @@ const Dashboard = () => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {kpiLoading ? '-' : `${kpiData?.compliancePercentage || 0}%`}
+                {kpiLoading ? '-' : `${kpiData?.overall.compliancePercentage || 0}%`}
               </div>
               <p className="text-xs text-muted-foreground">
                 Cumplimiento general
@@ -145,7 +213,7 @@ const Dashboard = () => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {kpiLoading ? '-' : kpiData?.duesToday || 0}
+                {kpiLoading ? '-' : kpiData?.overall.duesToday || 0}
               </div>
               <p className="text-xs text-muted-foreground">
                 Vencen hoy
@@ -160,7 +228,7 @@ const Dashboard = () => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {kpiLoading ? '-' : kpiData?.atRisk || 0}
+                {kpiLoading ? '-' : kpiData?.overall.atRisk || 0}
               </div>
               <p className="text-xs text-muted-foreground">
                 Tareas críticas
@@ -193,14 +261,14 @@ const Dashboard = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {kpiData?.riskyTasks.length === 0 ? (
+                  {kpiData?.overall?.riskyTasks?.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                         No hay tasks en riesgo
                       </TableCell>
                     </TableRow>
                   ) : (
-                    kpiData?.riskyTasks.map((task) => {
+                    kpiData?.overall?.riskyTasks?.map((task) => {
                       const risk = getRiskLevel(task);
                       return (
                         <TableRow key={task.id}>
@@ -237,9 +305,136 @@ const Dashboard = () => {
             )}
           </CardContent>
         </Card>
+
+        {subjectTypes.map(({ key, label }) => (
+          <div key={key} className="space-y-4">
+            <h2 className="text-xl font-bold">{label}</h2>
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+              <KpiCard
+                title="On-time %"
+                value={
+                  kpiLoading
+                    ? '-'
+                    : `${kpiData?.byType[key]?.onTimePercentage || 0}%`
+                }
+                description="Tareas completadas a tiempo"
+                icon={<CheckCircle className="h-4 w-4 text-green-600" />}
+              />
+              <KpiCard
+                title="Compliance-ok %"
+                value={
+                  kpiLoading
+                    ? '-'
+                    : `${kpiData?.byType[key]?.compliancePercentage || 0}%`
+                }
+                description="Cumplimiento general"
+                icon={<CheckCircle className="h-4 w-4 text-blue-600" />}
+              />
+              <KpiCard
+                title="SLAs Hoy"
+                value={
+                  kpiLoading ? '-' : kpiData?.byType[key]?.duesToday || 0
+                }
+                description="Vencen hoy"
+                icon={<Calendar className="h-4 w-4 text-yellow-600" />}
+              />
+              <KpiCard
+                title="En Riesgo"
+                value={
+                  kpiLoading ? '-' : kpiData?.byType[key]?.atRisk || 0
+                }
+                description="Tareas críticas"
+                icon={<AlertTriangle className="h-4 w-4 text-destructive" />}
+              />
+            </div>
+            <Card>
+              <CardHeader>
+                <CardTitle>Tasks en Riesgo</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {kpiLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Clock className="mr-2 h-4 w-4 animate-spin" />
+                    Cargando...
+                  </div>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Task</TableHead>
+                        <TableHead>OT</TableHead>
+                        <TableHead>Estado</TableHead>
+                        <TableHead>Vencimiento</TableHead>
+                        <TableHead>Nivel de Riesgo</TableHead>
+                        <TableHead className="text-right">Acciones</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {kpiData?.byType[key]?.riskyTasks?.length === 0 ? (
+                        <TableRow>
+                          <TableCell
+                            colSpan={6}
+                            className="text-center py-8 text-muted-foreground"
+                          >
+                            No hay tasks en riesgo
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        kpiData?.byType[key]?.riskyTasks?.map((task) => {
+                          const risk = getRiskLevel(task);
+                          return (
+                            <TableRow key={task.id}>
+                              <TableCell className="font-medium">
+                                <Link
+                                  to={`/tasks/${task.id}`}
+                                  className="hover:underline"
+                                >
+                                  {task.title}
+                                </Link>
+                              </TableCell>
+                              <TableCell>
+                                <Link
+                                  to={`/subjects/${task.subjects.id}`}
+                                  className="hover:underline text-primary"
+                                >
+                                  {task.subjects.title}
+                                </Link>
+                              </TableCell>
+                              <TableCell>{getStatusBadge(task.status)}</TableCell>
+                              <TableCell>
+                                {task.due_date
+                                  ? format(
+                                      new Date(task.due_date),
+                                      'dd/MM/yyyy',
+                                      { locale: es }
+                                    )
+                                  : 'Sin fecha'}
+                              </TableCell>
+                              <TableCell>
+                                <span className={risk.color}>{risk.level}</span>
+                              </TableCell>
+                              <TableCell className="text-right">
+                                <Link to={`/tasks/${task.id}`}>
+                                  <Button variant="outline" size="sm">
+                                    Ver Detalle
+                                  </Button>
+                                </Link>
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })
+                      )}
+                    </TableBody>
+                  </Table>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        ))}
       </div>
     </Layout>
   );
 };
 
 export default Dashboard;
+
