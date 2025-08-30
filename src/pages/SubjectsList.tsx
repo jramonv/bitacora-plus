@@ -15,10 +15,11 @@ import Layout from "@/components/Layout";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { cn } from "@/lib/utils";
+import { SubjectStatus } from "@/types/database";
 
 const SubjectsList = () => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState<"all" | SubjectStatus>("all");
   const [dateFrom, setDateFrom] = useState<Date>();
   const [dateTo, setDateTo] = useState<Date>();
 
@@ -80,7 +81,7 @@ const SubjectsList = () => {
 
   const getTasksStats = (tasks: any[]) => {
     const total = tasks.length;
-    const completed = tasks.filter(t => t.status === 'closed').length;
+    const completed = tasks.filter(t => t.status === 'completed').length;
     const pending = total - completed;
     
     return { total, completed, pending };
@@ -130,7 +131,7 @@ const SubjectsList = () => {
               </div>
 
               {/* Status Filter */}
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as "all" | SubjectStatus)}>
                 <SelectTrigger>
                   <SelectValue placeholder="Estado" />
                 </SelectTrigger>

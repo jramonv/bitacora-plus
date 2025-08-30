@@ -212,7 +212,7 @@ const TaskDetail = () => {
   }
 
   const evidence = task.evidence || [];
-  const required = task.required_evidence || {};
+  const required = castRequiredEvidence(task.required_evidence);
   const photoCount = evidence.filter(e => e.kind === 'photo').length;
   const hasGeotag = evidence.some(e => e.latitude && e.longitude);
   const hasSignature = evidence.some(e => e.kind === 'pdf');
@@ -355,7 +355,7 @@ const TaskDetail = () => {
                         type="number"
                         min="0"
                         className="w-20"
-                        value={formData.required_evidence?.min_photos || 3}
+                        value={castRequiredEvidence(formData.required_evidence).min_photos || 3}
                         onChange={(e) => setFormData({ 
                           ...formData, 
                           required_evidence: { 
@@ -365,7 +365,7 @@ const TaskDetail = () => {
                         })}
                       />
                     ) : (
-                      <span className="text-sm">{required.min_photos || 3}</span>
+                      <span className="text-sm">{castRequiredEvidence(required).min_photos || 3}</span>
                     )}
                   </div>
 
@@ -374,7 +374,7 @@ const TaskDetail = () => {
                     <label className="text-sm">Geotag requerido</label>
                     {isEditing ? (
                       <Checkbox
-                        checked={formData.required_evidence?.geotag_required || false}
+                        checked={castRequiredEvidence(formData.required_evidence).geotag_required || false}
                         onCheckedChange={(checked) => setFormData({ 
                           ...formData, 
                           required_evidence: { 
@@ -384,7 +384,7 @@ const TaskDetail = () => {
                         })}
                       />
                     ) : (
-                      <span className="text-sm">{required.geotag_required ? 'Sí' : 'No'}</span>
+                      <span className="text-sm">{castRequiredEvidence(required).geotag_required ? 'Sí' : 'No'}</span>
                     )}
                   </div>
 
@@ -393,7 +393,7 @@ const TaskDetail = () => {
                     <label className="text-sm">Firma requerida</label>
                     {isEditing ? (
                       <Checkbox
-                        checked={formData.required_evidence?.signature_required || false}
+                        checked={castRequiredEvidence(formData.required_evidence).signature_required || false}
                         onCheckedChange={(checked) => setFormData({ 
                           ...formData, 
                           required_evidence: { 
@@ -403,7 +403,7 @@ const TaskDetail = () => {
                         })}
                       />
                     ) : (
-                      <span className="text-sm">{required.signature_required ? 'Sí' : 'No'}</span>
+                      <span className="text-sm">{castRequiredEvidence(required).signature_required ? 'Sí' : 'No'}</span>
                     )}
                   </div>
                 </div>
@@ -418,11 +418,11 @@ const TaskDetail = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-2">
-                    {task.checklist_runs[0].checklist_templates?.items?.map((item: any, idx: number) => (
+                    {(task.checklist_runs[0].checklist_templates?.items as any[])?.map((item: any, idx: number) => (
                       <div key={idx} className="flex items-center space-x-2">
                         <Checkbox 
                           checked={task.checklist_runs[0].result?.[idx]?.checked || false}
-                          disabled={task.status === 'closed'}
+                          disabled={task.status === 'completed'}
                         />
                         <label className="text-sm">{item.text}</label>
                       </div>
@@ -451,9 +451,9 @@ const TaskDetail = () => {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-2">
                       <FileText className="h-4 w-4" />
-                      <span className="text-sm">Fotos ({photoCount}/{required.min_photos || 3})</span>
+                      <span className="text-sm">Fotos ({photoCount}/{castRequiredEvidence(required).min_photos || 3})</span>
                     </div>
-                    {photoCount >= (required.min_photos || 3) ? (
+                    {photoCount >= (castRequiredEvidence(required).min_photos || 3) ? (
                       <CheckCircle className="h-4 w-4 text-green-500" />
                     ) : (
                       <AlertTriangle className="h-4 w-4 text-yellow-500" />
@@ -461,7 +461,7 @@ const TaskDetail = () => {
                   </div>
 
                   {/* Geotag */}
-                  {required.geotag_required && (
+                  {castRequiredEvidence(required).geotag_required && (
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-2">
                         <MapPin className="h-4 w-4" />
@@ -476,7 +476,7 @@ const TaskDetail = () => {
                   )}
 
                   {/* Signature */}
-                  {required.signature_required && (
+                  {castRequiredEvidence(required).signature_required && (
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-2">
                         <Signature className="h-4 w-4" />
@@ -499,7 +499,7 @@ const TaskDetail = () => {
                 <CardTitle>Evidencias</CardTitle>
               </CardHeader>
               <CardContent>
-                {task.status !== 'closed' && (
+                {task.status !== 'completed' && (
                   <div className="border-2 border-dashed border-muted rounded-lg p-8 text-center mb-4">
                     <Upload className="mx-auto h-8 w-8 text-muted-foreground mb-2" />
                     <p className="text-sm text-muted-foreground">

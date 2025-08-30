@@ -11,6 +11,7 @@ import { Link } from "react-router-dom";
 import Layout from "@/components/Layout";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import { TaskStatus, SubjectStatus, castAIFlags } from "@/types/database";
 
 const SubjectDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -76,7 +77,7 @@ const SubjectDetail = () => {
     enabled: !!subject?.tasks
   });
 
-  const getStatusBadge = (status: string) => {
+  const getStatusBadge = (status: TaskStatus | SubjectStatus | string) => {
     const variants = {
       'draft': { variant: 'outline' as const, label: 'Borrador' },
       'active': { variant: 'default' as const, label: 'Activo' },
@@ -84,6 +85,7 @@ const SubjectDetail = () => {
       'cancelled': { variant: 'destructive' as const, label: 'Cancelado' },
       'pending': { variant: 'secondary' as const, label: 'Pendiente' },
       'in_progress': { variant: 'default' as const, label: 'En Progreso' },
+      'completed': { variant: 'default' as const, label: 'Completada' },
       'blocked': { variant: 'destructive' as const, label: 'Bloqueada' }
     };
     
@@ -92,7 +94,7 @@ const SubjectDetail = () => {
   };
 
   const getComplianceChips = (task: any) => {
-    const flags = task.ai_flags || [];
+    const flags = castAIFlags(task.ai_flags);
     const chips = [];
     
     if (flags.includes('missing_geotag')) chips.push({ label: 'Sin Geotag', variant: 'destructive' as const });
@@ -355,14 +357,14 @@ const SubjectDetail = () => {
                   
                   <div className="text-center p-4 border rounded-lg">
                     <div className="text-2xl font-bold text-green-600">
-                      {subject.tasks?.filter(t => t.status === 'closed').length || 0}
+                      {subject.tasks?.filter(t => t.status === 'completed').length || 0}
                     </div>
                     <p className="text-sm text-muted-foreground">Completadas</p>
                   </div>
                   
                   <div className="text-center p-4 border rounded-lg">
                     <div className="text-2xl font-bold text-yellow-600">
-                      {subject.tasks?.filter(t => t.status !== 'closed').length || 0}
+                      {subject.tasks?.filter(t => t.status !== 'completed').length || 0}
                     </div>
                     <p className="text-sm text-muted-foreground">Pendientes</p>
                   </div>
