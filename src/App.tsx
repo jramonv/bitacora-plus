@@ -9,6 +9,7 @@ import SubjectsList from "./pages/SubjectsList";
 import SubjectDetail from "./pages/SubjectDetail";
 import TaskDetail from "./pages/TaskDetail";
 import NotFound from "./pages/NotFound";
+import SubjectCreate from "./pages/SubjectCreate";
 
 const queryClient = new QueryClient();
 
@@ -22,6 +23,7 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/subjects" element={<SubjectsList />} />
+          <Route path="/subjects/new" element={<SubjectCreate />} />
           <Route path="/subjects/:id" element={<SubjectDetail />} />
           <Route path="/tasks/:id" element={<TaskDetail />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
