@@ -80,3 +80,6 @@ verify_jwt = false
 
 [functions.inbound-webhooks]
 verify_jwt = false
+
+[functions.ai-dispatcher]
+verify_jwt = false

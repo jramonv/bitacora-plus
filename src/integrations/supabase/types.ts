@@ -976,6 +976,18 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      get_ai_jobs_for_processing: {
+        Args: { batch_size?: number }
+        Returns: {
+          attempts: number
+          id: string
+          input_ref: Json
+          job_type: string
+          subject_id: string
+          task_id: string
+          tenant_id: string
+        }[]
+      }
       issue_api_key: {
         Args: { p_name: string; p_tenant_id: string }
         Returns: {
