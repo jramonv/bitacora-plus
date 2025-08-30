@@ -46,7 +46,7 @@ export interface LogMetadata {
 export type TaskStatus = "pending" | "in_progress" | "completed" | "blocked";
 export type SubjectStatus = "draft" | "active" | "closed" | "cancelled";
 export type UserRole = "owner" | "editor" | "viewer";
-export type EvidenceKind = "photo" | "pdf";
+export type EvidenceKind = "photo" | "pdf" | "signature";
 
 // Helper functions for type casting
 export const castRequiredEvidence = (data: any): RequiredEvidence => {

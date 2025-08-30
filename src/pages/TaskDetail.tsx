@@ -19,6 +19,7 @@ import { es } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
 import { TaskStatus, RequiredEvidence, castRequiredEvidence } from "@/types/database";
 import { EvidenceUpload } from "@/components/EvidenceUpload";
+import { SignaturePad } from "@/components/SignaturePad";
 
 const TaskDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -215,9 +216,9 @@ const TaskDetail = () => {
     
     // 3. Check signature requirement  
     if (required.signature_required) {
-      const hasSignature = evidence.some(e => e.kind === 'pdf');
+      const hasSignature = evidence.some(e => e.kind === 'signature');
       if (!hasSignature) {
-        errors.push('Se requiere firma o documento firmado (PDF)');
+        errors.push('Se requiere firma');
       }
     }
     
@@ -327,7 +328,7 @@ const TaskDetail = () => {
   const required = castRequiredEvidence(task.required_evidence);
   const photoCount = evidence.filter(e => e.kind === 'photo').length;
   const hasGeotag = evidence.some(e => e.latitude && e.longitude);
-  const hasSignature = evidence.some(e => e.kind === 'pdf');
+  const hasSignature = evidence.some(e => e.kind === 'signature');
 
   return (
     <Layout>
@@ -619,6 +620,18 @@ const TaskDetail = () => {
                   disabled={task.status === 'completed'}
                 />
 
+                {required.signature_required && (
+                  <div className="mt-4">
+                    <SignaturePad
+                      taskId={id!}
+                      tenantId={task.tenant_id}
+                      subjectId={task.subject_id}
+                      onSave={() => queryClient.invalidateQueries({ queryKey: ['task', id] })}
+                      disabled={task.status === 'completed'}
+                    />
+                  </div>
+                )}
+
                 {/* Evidence List */}
                 <div className="space-y-2 mt-4">
                   {evidence.length === 0 ? (
@@ -631,6 +644,8 @@ const TaskDetail = () => {
                         <div className="flex items-center space-x-2">
                           {item.kind === 'photo' ? (
                             <FileText className="h-4 w-4" />
+                          ) : item.kind === 'signature' ? (
+                            <Signature className="h-4 w-4" />
                           ) : (
                             <FileText className="h-4 w-4" />
                           )}
