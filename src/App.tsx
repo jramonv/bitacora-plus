@@ -9,6 +9,7 @@ import SubjectsList from "./pages/SubjectsList";
 import SubjectDetail from "./pages/SubjectDetail";
 import TaskDetail from "./pages/TaskDetail";
 import NotFound from "./pages/NotFound";
+import Onboarding from "./pages/Onboarding";
 
 const queryClient = new QueryClient();
 
@@ -20,6 +21,7 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
+          <Route path="/onboarding" element={<Onboarding />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/subjects" element={<SubjectsList />} />
           <Route path="/subjects/:id" element={<SubjectDetail />} />
