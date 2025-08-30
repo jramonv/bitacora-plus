@@ -103,10 +103,12 @@ const SubjectsList = () => {
             <h1 className="text-3xl font-bold">Órdenes de Trabajo</h1>
             <p className="text-muted-foreground">Gestión de proyectos y OTs</p>
           </div>
-          <Button>
-            <Plus className="mr-2 h-4 w-4" />
-            Nueva OT
-          </Button>
+          <Link to="/subjects/new">
+            <Button>
+              <Plus className="mr-2 h-4 w-4" />
+              Nueva OT
+            </Button>
+          </Link>
         </div>
 
         {/* Filters */}
