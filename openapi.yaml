@@ -1,0 +1,708 @@
+openapi: 3.0.3
+info:
+  title: Bitácora API
+  description: Multi-tenant operational log and task compliance API
+  version: "1.0.0"
+  contact:
+    name: Bitácora Support
+    url: https://bitacora.example.com
+    email: support@bitacora.example.com
+
+servers:
+  - url: https://eeprxrlmcbtywuuwnuex.supabase.co/functions/v1/api-v1
+    description: Production API
+
+security:
+  - ApiKeyAuth: []
+  - BearerAuth: []
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-Api-Key
+      description: Tenant API key (format: bta_...)
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token from Supabase Auth
+
+  schemas:
+    Error:
+      type: object
+      required:
+        - type
+        - title
+        - detail
+      properties:
+        type:
+          type: string
+          format: uri
+          example: "https://bitacora.api/errors/validation_error"
+        title:
+          type: string
+          example: "Validation Error"
+        detail:
+          type: string
+          example: "Title is required"
+        instance:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+
+    Subject:
+      type: object
+      required:
+        - id
+        - tenant_id
+        - title
+        - status
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        tenant_id:
+          type: string
+          format: uuid
+        title:
+          type: string
+          maxLength: 255
+        description:
+          type: string
+          nullable: true
+        status:
+          type: string
+          enum: [draft, active, closed, cancelled]
+        due_date:
+          type: string
+          format: date-time
+          nullable: true
+        created_by:
+          type: string
+          format: uuid
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        closed_at:
+          type: string
+          format: date-time
+          nullable: true
+        ai_health:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          nullable: true
+        ai_top_issues:
+          type: array
+          items:
+            type: string
+
+    Task:
+      type: object
+      required:
+        - id
+        - tenant_id
+        - subject_id
+        - title
+        - status
+        - required_evidence
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        tenant_id:
+          type: string
+          format: uuid
+        subject_id:
+          type: string
+          format: uuid
+        title:
+          type: string
+          maxLength: 255
+        description:
+          type: string
+          nullable: true
+        status:
+          type: string
+          enum: [pending, in_progress, completed, blocked]
+        assigned_to:
+          type: string
+          format: uuid
+          nullable: true
+        due_date:
+          type: string
+          format: date-time
+          nullable: true
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+        required_evidence:
+          $ref: '#/components/schemas/RequiredEvidence'
+        checklist_id:
+          type: string
+          format: uuid
+          nullable: true
+        ai_flags:
+          type: array
+          items:
+            type: string
+          description: "AI-detected compliance flags"
+        ai_risk:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          nullable: true
+        ai_last_summary_id:
+          type: string
+          format: uuid
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        evidence:
+          type: array
+          items:
+            $ref: '#/components/schemas/Evidence'
+
+    RequiredEvidence:
+      type: object
+      properties:
+        min_photos:
+          type: integer
+          minimum: 0
+          default: 3
+        geotag_required:
+          type: boolean
+          default: true
+        signature_required:
+          type: boolean
+          default: true
+        checklist_id:
+          type: string
+          format: uuid
+          nullable: true
+
+    Evidence:
+      type: object
+      required:
+        - id
+        - tenant_id
+        - task_id
+        - kind
+        - filename
+        - file_path
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        tenant_id:
+          type: string
+          format: uuid
+        task_id:
+          type: string
+          format: uuid
+        kind:
+          type: string
+          enum: [photo, pdf]
+        filename:
+          type: string
+        file_path:
+          type: string
+        checksum:
+          type: string
+          nullable: true
+        latitude:
+          type: number
+          format: double
+          nullable: true
+        longitude:
+          type: number
+          format: double
+          nullable: true
+        metadata:
+          type: object
+          additionalProperties: true
+        created_by:
+          type: string
+          format: uuid
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+
+    PaginatedResponse:
+      type: object
+      required:
+        - data
+        - page
+        - total
+      properties:
+        data:
+          type: array
+          items: {}
+        page:
+          type: integer
+          minimum: 1
+        total:
+          type: integer
+          minimum: 0
+
+    CreateSubjectRequest:
+      type: object
+      required:
+        - title
+      properties:
+        title:
+          type: string
+          maxLength: 255
+        description:
+          type: string
+        due_date:
+          type: string
+          format: date-time
+
+    CreateTaskRequest:
+      type: object
+      required:
+        - subject_id
+        - title
+      properties:
+        subject_id:
+          type: string
+          format: uuid
+        title:
+          type: string
+          maxLength: 255
+        description:
+          type: string
+        assignee_id:
+          type: string
+          format: uuid
+        due_date:
+          type: string
+          format: date-time
+        required_evidence:
+          $ref: '#/components/schemas/RequiredEvidence'
+
+    UpdateTaskRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          maxLength: 255
+        description:
+          type: string
+        assignee_id:
+          type: string
+          format: uuid
+        due_date:
+          type: string
+          format: date-time
+        required_evidence:
+          $ref: '#/components/schemas/RequiredEvidence'
+        status:
+          type: string
+          enum: [pending, in_progress, completed, blocked]
+
+    CloseTaskRequest:
+      type: object
+      properties:
+        signature_ref:
+          type: string
+          description: "Reference to signature evidence"
+        lat:
+          type: number
+          format: double
+        lon:
+          type: number
+          format: double
+
+    PresignedUploadRequest:
+      type: object
+      required:
+        - subject_id
+        - task_id
+        - filename
+        - content_type
+        - size
+      properties:
+        subject_id:
+          type: string
+          format: uuid
+        task_id:
+          type: string
+          format: uuid
+        filename:
+          type: string
+        content_type:
+          type: string
+          enum: [image/jpeg, image/png, image/webp, application/pdf]
+        size:
+          type: integer
+          minimum: 1
+          maximum: 52428800
+
+    PresignedUploadResponse:
+      type: object
+      required:
+        - upload_url
+        - file_path
+        - expires_in
+      properties:
+        upload_url:
+          type: string
+          format: uri
+        file_path:
+          type: string
+        expires_in:
+          type: integer
+          description: "URL expiration time in seconds"
+        instructions:
+          type: object
+          properties:
+            method:
+              type: string
+              example: "PUT"
+            headers:
+              type: object
+            note:
+              type: string
+
+paths:
+  /subjects:
+    get:
+      summary: List subjects
+      description: Get paginated list of subjects with optional filtering
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [draft, active, closed, cancelled]
+        - name: due_from
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: due_to
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Subject'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    post:
+      summary: Create subject
+      description: Create a new subject (work order/project)
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          schema:
+            type: string
+          description: Optional idempotency key for safe retries
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSubjectRequest'
+      responses:
+        '201':
+          description: Subject created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Subject'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /subjects/{id}:
+    get:
+      summary: Get subject
+      description: Get a specific subject by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Subject'
+        '404':
+          description: Subject not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /tasks:
+    post:
+      summary: Create task
+      description: Create a new task within a subject
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          schema:
+            type: string
+          description: Optional idempotency key for safe retries
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTaskRequest'
+      responses:
+        '201':
+          description: Task created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /tasks/{id}:
+    get:
+      summary: Get task
+      description: Get a specific task by ID with evidence
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '404':
+          description: Task not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    patch:
+      summary: Update task
+      description: Update task properties
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: Idempotency-Key
+          in: header
+          schema:
+            type: string
+          description: Optional idempotency key for safe retries
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTaskRequest'
+      responses:
+        '200':
+          description: Task updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '404':
+          description: Task not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /tasks/{id}/close:
+    post:
+      summary: Close task
+      description: Close a task with compliance validation
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CloseTaskRequest'
+      responses:
+        '200':
+          description: Task closed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '400':
+          description: Compliance requirements not met
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                type: "https://bitacora.api/errors/compliance_violation"
+                title: "Compliance Requirements Not Met"
+                detail: "Minimum 3 photos required; Signature required for task closure"
+
+  /tasks/{id}/report.pdf:
+    get:
+      summary: Export task PDF
+      description: Generate and download task report as PDF
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: PDF report
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        '404':
+          description: Task not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /uploads/presign:
+    post:
+      summary: Get presigned upload URL
+      description: Get presigned URL for uploading evidence files
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PresignedUploadRequest'
+      responses:
+        '200':
+          description: Presigned URL generated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PresignedUploadResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+webhooks:
+  TaskClosed:
+    post:
+      summary: Task closed webhook
+      description: Sent when a task is closed
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                id:
+                  type: string
+                  format: uuid
+                subject_id:
+                  type: string
+                  format: uuid
+                title:
+                  type: string
+                status:
+                  type: string
+                  enum: [completed]
+                completed_at:
+                  type: string
+                  format: date-time
+                ai_risk:
+                  type: number
+                  format: float
+                ai_flags:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        '200':
+          description: Webhook received successfully
+
+externalDocs:
+  description: Full API Documentation
+  url: https://docs.bitacora.example.com

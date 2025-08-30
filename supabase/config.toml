@@ -65,3 +65,18 @@ verify_jwt = false
 
 [functions.export-task-pdf]
 verify_jwt = true
+
+[functions.api-v1]
+verify_jwt = false
+
+[functions.webhook-delivery]
+verify_jwt = false
+
+[functions.automation-engine]
+verify_jwt = false
+
+[functions.presigned-upload]
+verify_jwt = false
+
+[functions.inbound-webhooks]
+verify_jwt = false
