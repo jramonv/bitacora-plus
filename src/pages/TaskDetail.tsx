@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -29,6 +29,8 @@ const TaskDetail = () => {
   
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState<any>({});
+  const [signedUrls, setSignedUrls] = useState<Record<string, string>>({});
+  const [evidencePage, setEvidencePage] = useState(1);
 
   // Fetch task details
   const { data: task, isLoading } = useQuery({
@@ -330,6 +332,25 @@ const TaskDetail = () => {
   const photoCount = evidence.filter(e => e.kind === 'photo').length;
   const hasGeotag = evidence.some(e => e.latitude && e.longitude);
   const hasSignature = evidence.some(e => e.kind === 'pdf');
+
+  useEffect(() => {
+    const loadUrls = async () => {
+      const urls: Record<string, string> = {};
+      for (const item of evidence) {
+        if (item.kind === 'photo') {
+          const { data } = await supabase
+            .storage
+            .from('bitacora')
+            .createSignedUrl(item.file_path, 60);
+          if (data?.signedUrl) {
+            urls[item.id] = data.signedUrl;
+          }
+        }
+      }
+      setSignedUrls(urls);
+    };
+    loadUrls();
+  }, [evidence]);
 
   return (
     <Layout>
@@ -634,11 +655,16 @@ const TaskDetail = () => {
                       }
                     />
                   ) : (
-                    evidence.map((item) => (
+                    evidence.slice(0, evidencePage * 25).map((item) => (
                       <div key={item.id} className="flex items-center justify-between p-2 border rounded">
                         <div className="flex items-center space-x-2">
-                          {item.kind === 'photo' ? (
-                            <FileText className="h-4 w-4" />
+                          {item.kind === 'photo' && signedUrls[item.id] ? (
+                            <img
+                              src={signedUrls[item.id]}
+                              alt={item.filename}
+                              loading="lazy"
+                              className="h-10 w-10 rounded object-cover"
+                            />
                           ) : (
                             <FileText className="h-4 w-4" />
                           )}
@@ -656,11 +682,41 @@ const TaskDetail = () => {
                     ))
                   )}
                 </div>
+                {evidence.length > evidencePage * 25 && (
+                  <Button
+                    variant="outline"
+                    className="w-full mt-2"
+                    onClick={() => setEvidencePage(evidencePage + 1)}
+                  >
+                    Cargar más
+                  </Button>
+                )}
               </CardContent>
             </Card>
           </div>
         </div>
       </div>
+      {task.status !== 'completed' && (
+        <div className="md:hidden fixed bottom-0 left-0 right-0 bg-background border-t p-4">
+          <Button
+            onClick={handleClose}
+            disabled={!canClose()}
+            className="w-full"
+          >
+            {canClose() ? (
+              <>
+                <CheckCircle className="mr-2 h-4 w-4" />
+                Cerrar Task
+              </>
+            ) : (
+              <>
+                <Lock className="mr-2 h-4 w-4" />
+                Cerrar Task
+              </>
+            )}
+          </Button>
+        </div>
+      )}
     </Layout>
   );
 };
