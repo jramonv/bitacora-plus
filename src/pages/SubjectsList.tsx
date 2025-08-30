@@ -12,6 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { CalendarIcon, Search, Filter, Plus, Clock } from "lucide-react";
 import { Link } from "react-router-dom";
 import Layout from "@/components/Layout";
+import EmptyState from "@/components/EmptyState";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { cn } from "@/lib/utils";
@@ -103,10 +104,12 @@ const SubjectsList = () => {
             <h1 className="text-3xl font-bold">Órdenes de Trabajo</h1>
             <p className="text-muted-foreground">Gestión de proyectos y OTs</p>
           </div>
-          <Button>
-            <Plus className="mr-2 h-4 w-4" />
-            Nueva OT
-          </Button>
+          <Link to="/subjects/new">
+            <Button>
+              <Plus className="mr-2 h-4 w-4" />
+              Nueva OT
+            </Button>
+          </Link>
         </div>
 
         {/* Filters */}
@@ -219,11 +222,18 @@ const SubjectsList = () => {
                 </TableHeader>
                 <TableBody>
                   {!subjects || subjects.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                        No se encontraron órdenes de trabajo
-                      </TableCell>
-                    </TableRow>
+                    <EmptyState
+                      title="No se encontraron órdenes de trabajo"
+                      description="Crea una nueva OT para comenzar."
+                      button={
+                        <Link to="/subjects/new">
+                          <Button>
+                            <Plus className="mr-2 h-4 w-4" />
+                            Nueva OT
+                          </Button>
+                        </Link>
+                      }
+                    />
                   ) : (
                     subjects.map((subject) => {
                       const tasksStats = getTasksStats(subject.tasks || []);
