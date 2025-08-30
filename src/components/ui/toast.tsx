@@ -47,6 +47,8 @@ const Toast = React.forwardRef<
     <ToastPrimitives.Root
       ref={ref}
       className={cn(toastVariants({ variant }), className)}
+      role="status"
+      aria-live="polite"
       {...props}
     />
   )

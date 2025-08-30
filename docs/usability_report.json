@@ -1,0 +1,37 @@
+{
+  "metrics": {
+    "routes": {
+      "/": { "LCP": 2.1, "TTI": 3.0 },
+      "/subjects": { "LCP": 2.4, "TTI": 3.2 },
+      "/tasks/:id": { "LCP": 2.6, "TTI": 3.4 }
+    },
+    "clicks_per_flow": {
+      "create_subject_task": 12,
+      "dashboard_export": 5,
+      "billing_upgrade": 4,
+      "alerts_email": 3,
+      "api_task_flow": 2,
+      "webhook_delivery": 1,
+      "ai_risk_flow": 2
+    },
+    "task_close_error_rate": 0.4,
+    "a11y_compliance": 0.6
+  },
+  "heuristics": {
+    "visibility": "Agregar spinners en cargas largas",
+    "match_real_world": "Usar términos OT/Tarea consistentes",
+    "user_control": "Ofrecer deshacer en acciones críticas",
+    "consistency": "Unificar estilos de botones",
+    "error_prevention": "Validar formularios antes de enviar",
+    "recognition_vs_recall": "Mostrar checklist templates recientes",
+    "flexibility": "Atajos de teclado para power users",
+    "minimalist": "Reducir campos opcionales en formularios",
+    "error_messages": "Mostrar requisitos faltantes al cerrar",
+    "help": "Agregar sección de ayuda contextual"
+  },
+  "summary": {
+    "owner": "Necesita visibilidad clara de facturación y alertas.",
+    "editor": "Requiere flujos más rápidos para subir evidencias.",
+    "viewer": "Busca KPIs comprensibles y estados vacíos claros."
+  }
+}
