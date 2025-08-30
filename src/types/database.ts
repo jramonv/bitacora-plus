@@ -32,14 +32,14 @@ export interface EvidenceMetadata {
   size?: number;
   mimeType?: string;
   checksum?: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export interface LogMetadata {
-  previousValue?: any;
-  newValue?: any;
+  previousValue?: unknown;
+  newValue?: unknown;
   userId?: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 // Task status types
@@ -48,23 +48,37 @@ export type SubjectStatus = "draft" | "active" | "closed" | "cancelled";
 export type UserRole = "owner" | "editor" | "viewer";
 export type EvidenceKind = "photo" | "pdf";
 
+export interface Task {
+  id: string;
+  title: string;
+  status: TaskStatus;
+  due_date?: string | null;
+  completed_at?: string | null;
+  ai_risk?: number | null;
+  subjects: {
+    id: string;
+    title: string;
+    status: SubjectStatus;
+  };
+}
+
 // Helper functions for type casting
-export const castRequiredEvidence = (data: any): RequiredEvidence => {
+export const castRequiredEvidence = (data: unknown): RequiredEvidence => {
   if (!data || typeof data !== 'object') return {};
   return data as RequiredEvidence;
 };
 
-export const castChecklistResult = (data: any): ChecklistResult => {
+export const castChecklistResult = (data: unknown): ChecklistResult => {
   if (!data || typeof data !== 'object') return {};
   return data as ChecklistResult;
 };
 
-export const castAIFlags = (data: any): string[] => {
+export const castAIFlags = (data: unknown): string[] => {
   if (!Array.isArray(data)) return [];
   return data as string[];
 };
 
-export const castLogMetadata = (data: any): LogMetadata => {
+export const castLogMetadata = (data: unknown): LogMetadata => {
   if (!data || typeof data !== 'object') return {};
   return data as LogMetadata;
 };

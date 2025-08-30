@@ -9,7 +9,7 @@ import { Link } from "react-router-dom";
 import Layout from "@/components/Layout";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { TaskStatus, castAIFlags } from "@/types/database";
+import { TaskStatus, Task } from "@/types/database";
 
 const Dashboard = () => {
   // Fetch KPI data
@@ -80,7 +80,7 @@ const Dashboard = () => {
     return <Badge variant={config.variant}>{config.label}</Badge>;
   };
 
-  const getRiskLevel = (task: any) => {
+  const getRiskLevel = (task: Task) => {
     const isOverdue = task.due_date && new Date(task.due_date) < new Date();
     const hasHighRisk = task.ai_risk && task.ai_risk > 70;
     
@@ -200,7 +200,7 @@ const Dashboard = () => {
                       </TableCell>
                     </TableRow>
                   ) : (
-                    kpiData?.riskyTasks.map((task) => {
+                    kpiData?.riskyTasks.map((task: Task) => {
                       const risk = getRiskLevel(task);
                       return (
                         <TableRow key={task.id}>
