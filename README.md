@@ -71,3 +71,10 @@ Yes, you can!
 To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
 
 Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+
+## Environment Variables
+
+The ERP integration requires the following variables in your `.env` file:
+
+- `VITE_ERP_API_URL`: Base URL for the ERP API.
+- `VITE_ERP_API_KEY`: API key used to authenticate requests.

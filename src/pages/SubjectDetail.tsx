@@ -1,5 +1,5 @@
 import { useParams } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -13,10 +13,14 @@ import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { TaskStatus, SubjectStatus, castAIFlags } from "@/types/database";
 import { useToast } from "@/hooks/use-toast";
+import { useExternalSync } from "@/hooks/useExternalSync";
+import { closeSubject as closeSubjectERP } from "@/integrations/erp/syncSubjectToERP";
 
 const SubjectDetail = () => {
   const { id } = useParams<{ id: string }>();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const { sync: syncSubjectClose } = useExternalSync(closeSubjectERP);
 
   // Fetch subject details
   const { data: subject, isLoading } = useQuery({
@@ -170,6 +174,32 @@ const SubjectDetail = () => {
     }
   };
 
+  const handleCloseSubject = async () => {
+    if (!subject) return;
+    try {
+      const { error } = await supabase
+        .from('subjects')
+        .update({ status: 'closed' })
+        .eq('id', subject.id);
+      if (error) throw error;
+
+      await syncSubjectClose(subject.id);
+      await queryClient.invalidateQueries({ queryKey: ['subject', id] });
+
+      toast({
+        title: "OT cerrada",
+        description: "Sincronizada con ERP",
+      });
+    } catch (error) {
+      console.error('Error closing subject:', error);
+      toast({
+        title: "Error",
+        description: "No se pudo cerrar la OT",
+        variant: "destructive",
+      });
+    }
+  };
+
   if (isLoading) {
     return (
       <Layout>
@@ -220,15 +250,19 @@ const SubjectDetail = () => {
             </div>
           </div>
           <div className="flex space-x-2">
-            <Button variant="outline" onClick={exportToPDF}>
-              <Download className="mr-2 h-4 w-4" />
-              Exportar PDF
-            </Button>
-            <Button>
-              <Plus className="mr-2 h-4 w-4" />
-              Nueva Task
-            </Button>
-          </div>
+          <Button variant="outline" onClick={exportToPDF}>
+            <Download className="mr-2 h-4 w-4" />
+            Exportar PDF
+          </Button>
+          <Button variant="secondary" onClick={handleCloseSubject}>
+            <FileDown className="mr-2 h-4 w-4" />
+            Cerrar OT
+          </Button>
+          <Button>
+            <Plus className="mr-2 h-4 w-4" />
+            Nueva Task
+          </Button>
+        </div>
         </div>
 
         {/* Content Tabs */}
