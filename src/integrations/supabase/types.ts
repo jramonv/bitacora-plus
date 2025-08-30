@@ -14,6 +14,175 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_embeddings: {
+        Row: {
+          created_at: string | null
+          embedding: string | null
+          id: string
+          object_id: string
+          object_type: string
+          tenant_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          embedding?: string | null
+          id?: string
+          object_id: string
+          object_type: string
+          tenant_id: string
+        }
+        Update: {
+          created_at?: string | null
+          embedding?: string | null
+          id?: string
+          object_id?: string
+          object_type?: string
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_embeddings_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_jobs: {
+        Row: {
+          cost_usd: number | null
+          created_at: string | null
+          error: string | null
+          finished_at: string | null
+          id: string
+          input_ref: Json | null
+          job_type: Database["public"]["Enums"]["ai_job_type"]
+          model: string | null
+          output_ref: string | null
+          started_at: string | null
+          status: Database["public"]["Enums"]["ai_job_status"]
+          subject_id: string | null
+          task_id: string | null
+          tenant_id: string
+          tokens_in: number | null
+          tokens_out: number | null
+        }
+        Insert: {
+          cost_usd?: number | null
+          created_at?: string | null
+          error?: string | null
+          finished_at?: string | null
+          id?: string
+          input_ref?: Json | null
+          job_type: Database["public"]["Enums"]["ai_job_type"]
+          model?: string | null
+          output_ref?: string | null
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["ai_job_status"]
+          subject_id?: string | null
+          task_id?: string | null
+          tenant_id: string
+          tokens_in?: number | null
+          tokens_out?: number | null
+        }
+        Update: {
+          cost_usd?: number | null
+          created_at?: string | null
+          error?: string | null
+          finished_at?: string | null
+          id?: string
+          input_ref?: Json | null
+          job_type?: Database["public"]["Enums"]["ai_job_type"]
+          model?: string | null
+          output_ref?: string | null
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["ai_job_status"]
+          subject_id?: string | null
+          task_id?: string | null
+          tenant_id?: string
+          tokens_in?: number | null
+          tokens_out?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_jobs_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "subjects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_jobs_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_jobs_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_outputs: {
+        Row: {
+          content: Json
+          created_at: string | null
+          id: string
+          output_type: Database["public"]["Enums"]["ai_output_type"]
+          subject_id: string | null
+          task_id: string | null
+          tenant_id: string
+          version: string
+        }
+        Insert: {
+          content: Json
+          created_at?: string | null
+          id?: string
+          output_type: Database["public"]["Enums"]["ai_output_type"]
+          subject_id?: string | null
+          task_id?: string | null
+          tenant_id: string
+          version?: string
+        }
+        Update: {
+          content?: Json
+          created_at?: string | null
+          id?: string
+          output_type?: Database["public"]["Enums"]["ai_output_type"]
+          subject_id?: string | null
+          task_id?: string | null
+          tenant_id?: string
+          version?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_outputs_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "subjects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_outputs_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_outputs_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       checklist_runs: {
         Row: {
           completed_at: string | null
