@@ -12,7 +12,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
-import { CalendarIcon, Clock, Upload, FileText, Download, Lock, CheckCircle, AlertTriangle, MapPin, Signature, FileDown } from "lucide-react";
+import { CalendarIcon, Upload, FileText, Download, Lock, CheckCircle, AlertTriangle, MapPin, Signature, FileDown } from "lucide-react";
+import TaskDetailSkeleton from "@/components/ui/TaskDetailSkeleton";
 import Layout from "@/components/Layout";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -305,10 +306,7 @@ const TaskDetail = () => {
   if (isLoading) {
     return (
       <Layout>
-        <div className="flex items-center justify-center py-8">
-          <Clock className="mr-2 h-4 w-4 animate-spin" />
-          Cargando detalles de la task...
-        </div>
+        <TaskDetailSkeleton />
       </Layout>
     );
   }
