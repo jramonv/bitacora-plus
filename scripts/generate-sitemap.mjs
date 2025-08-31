@@ -14,7 +14,7 @@ while ((match = routeRegex.exec(content)) !== null) {
   routes.push(route);
 }
 
-const domain = 'https://<tu-dominio>';
+const domain = process.env.SITE_URL ?? 'https://bitacora.plus';
 const urls = routes.map((r) => `${domain}${r}`);
 const sitemap = `<?xml version="1.0" encoding="UTF-8"?>\n` +
   `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n` +
