@@ -14,17 +14,18 @@ import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { TaskStatus, SubjectStatus, castAIFlags } from "@/types/database";
 import { useToast } from "@/hooks/use-toast";
+import { Subject, Task, Evidence, LogEntry } from "@/types/entities";
 
 const SubjectDetail = () => {
   const { id } = useParams<{ id: string }>();
   const { toast } = useToast();
 
   // Fetch subject details
-  const { data: subject, isLoading } = useQuery({
+  const { data: subject, isLoading } = useQuery<Subject>({
     queryKey: ['subject', id],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('subjects')
+        .from<Subject>('subjects')
         .select(`
           *,
           tasks (
@@ -49,17 +50,17 @@ const SubjectDetail = () => {
         .single();
       
       if (error) throw error;
-      return data;
+      return data as Subject;
     },
     enabled: !!id
   });
 
   // Fetch evidence for this subject
-  const { data: evidence } = useQuery({
+  const { data: evidence } = useQuery<Evidence[]>({
     queryKey: ['subject-evidence', id],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('evidence')
+        .from<Evidence>('evidence')
         .select(`
           id,
           filename,
@@ -72,7 +73,7 @@ const SubjectDetail = () => {
             title
           )
         `)
-        .in('task_id', subject?.tasks?.map(t => t.id) || []);
+        .in('task_id', subject?.tasks?.map((t: Task) => t.id) || []);
       
       if (error) throw error;
       return data;
@@ -96,7 +97,7 @@ const SubjectDetail = () => {
     return <Badge variant={config.variant}>{config.label}</Badge>;
   };
 
-  const getComplianceChips = (task: any) => {
+  const getComplianceChips = (task: Task) => {
     const flags = castAIFlags(task.ai_flags);
     const chips = [];
     
@@ -259,7 +260,7 @@ const SubjectDetail = () => {
                   ) : (
                     subject.log_entries
                       .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-                      .map((log) => (
+                      .map((log: LogEntry) => (
                         <div key={log.id} className="flex items-start space-x-4 border-l-2 border-muted pl-4 pb-4">
                           <div className="min-w-0 flex-1">
                             <div className="flex items-center justify-between">
@@ -309,7 +310,7 @@ const SubjectDetail = () => {
                         </TableCell>
                       </TableRow>
                     ) : (
-                      subject.tasks.map((task) => (
+                      subject.tasks.map((task: Task) => (
                         <TableRow key={task.id}>
                           <TableCell>
                             <Link to={`/tasks/${task.id}`} className="font-medium hover:underline">
@@ -417,14 +418,14 @@ const SubjectDetail = () => {
                   
                   <div className="text-center p-4 border rounded-lg">
                     <div className="text-2xl font-bold text-green-600">
-                      {subject.tasks?.filter(t => t.status === 'completed').length || 0}
+                      {subject.tasks?.filter((t: Task) => t.status === 'completed').length || 0}
                     </div>
                     <p className="text-sm text-muted-foreground">Completadas</p>
                   </div>
                   
                   <div className="text-center p-4 border rounded-lg">
                     <div className="text-2xl font-bold text-yellow-600">
-                      {subject.tasks?.filter(t => t.status !== 'completed').length || 0}
+                      {subject.tasks?.filter((t: Task) => t.status !== 'completed').length || 0}
                     </div>
                     <p className="text-sm text-muted-foreground">Pendientes</p>
                   </div>

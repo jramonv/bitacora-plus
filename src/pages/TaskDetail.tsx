@@ -20,7 +20,11 @@ import { es } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
 import { TaskStatus, RequiredEvidence, castRequiredEvidence } from "@/types/database";
 import { EvidenceUpload } from "@/components/EvidenceUpload";
+
+import { Task, LogEntry } from "@/types/entities";
+=
 import { EmptyState } from "@/components/EmptyState";
+
 
 const TaskDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -28,14 +32,14 @@ const TaskDetail = () => {
   const queryClient = useQueryClient();
   
   const [isEditing, setIsEditing] = useState(false);
-  const [formData, setFormData] = useState<any>({});
+  const [formData, setFormData] = useState<Partial<Task> & { due_date?: Date | null }>({});
 
   // Fetch task details
-  const { data: task, isLoading } = useQuery({
+  const { data: task, isLoading } = useQuery<Task>({
     queryKey: ['task', id],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('tasks')
+        .from<Task>('tasks')
         .select(`
           *,
           subjects (
@@ -67,7 +71,7 @@ const TaskDetail = () => {
         .single();
       
       if (error) throw error;
-      
+
       // Initialize form data when task loads
       setFormData({
         title: data.title,
@@ -76,17 +80,17 @@ const TaskDetail = () => {
         assigned_to: data.assigned_to,
         required_evidence: data.required_evidence || {}
       });
-      
-      return data;
+
+      return data as Task;
     },
     enabled: !!id
   });
 
   // Update task mutation
-  const updateTaskMutation = useMutation({
-    mutationFn: async (updateData: any) => {
+  const updateTaskMutation = useMutation<void, Error, Partial<Task>>({
+    mutationFn: async (updateData: Partial<Task>) => {
       const { error } = await supabase
-        .from('tasks')
+        .from<Task>('tasks')
         .update(updateData)
         .eq('id', id);
       
@@ -120,8 +124,8 @@ const TaskDetail = () => {
 
       // Update task status
       const { error: taskError } = await supabase
-        .from('tasks')
-        .update({ 
+        .from<Task>('tasks')
+        .update({
           status: 'completed' as TaskStatus,
           completed_at: new Date().toISOString()
         })
@@ -131,7 +135,7 @@ const TaskDetail = () => {
 
       // Create log entry for status change
       const { error: logError } = await supabase
-        .from('log_entries')
+        .from<LogEntry>('log_entries')
         .insert({
           tenant_id: task?.tenant_id,
           subject_id: task?.subject_id,
@@ -164,7 +168,7 @@ const TaskDetail = () => {
   });
 
   const handleSave = () => {
-    const updateData: any = {
+    const updateData: Partial<Task> = {
       title: formData.title,
       description: formData.description,
       assigned_to: formData.assigned_to,
