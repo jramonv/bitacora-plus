@@ -1,77 +1,60 @@
-# Welcome to your Lovable project
+# Bitácora +
 
-## Project info
+Aplicación para registrar bitácoras y cumplimiento de tareas por orden de trabajo. Permite crear sujetos (OT/proyecto), definir tareas y adjuntar evidencias en forma de fotos o PDFs con geolocalización, firma y línea de tiempo. Incluye un panel para gestores y reglas de cierre como mínimo de fotos, geotag y firma obligatoria.
 
-**URL**: https://lovable.dev/projects/e0802b34-adfc-496a-ae0e-230f4b7640fd
+## Instalación
 
-## How can I edit this code?
+Requisitos: [Node.js](https://nodejs.org) 18+ y npm.
 
-There are several ways of editing your application.
+1. Clona este repositorio.
+2. Copia el archivo `.env` y ajusta las variables según tu proyecto.
+3. Instala dependencias con `npm install`.
+4. Inicia el entorno de desarrollo con `npm run dev`.
 
-**Use Lovable**
+## Scripts disponibles
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/e0802b34-adfc-496a-ae0e-230f4b7640fd) and start prompting.
+| Script | Descripción |
+|--------|-------------|
+| `npm run dev` | Servidor de desarrollo con recarga automática. |
+| `npm run build` | Genera la compilación de producción en `dist/`. |
+| `npm run build:dev` | Compila en modo development. |
+| `npm run lint` | Ejecuta ESLint sobre el proyecto. |
+| `npm run preview` | Sirve localmente la compilación de producción. |
 
-Changes made via Lovable will be committed automatically to this repo.
+## Variables de entorno
 
-**Use your preferred IDE**
+### Frontend (`.env`)
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+- `VITE_SUPABASE_PROJECT_ID` – ID del proyecto Supabase.
+- `VITE_SUPABASE_URL` – URL del proyecto Supabase.
+- `VITE_SUPABASE_PUBLISHABLE_KEY` – clave pública/anon de Supabase.
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+### Funciones de Supabase
 
-Follow these steps:
+Configura estas variables en el entorno donde se ejecuten las funciones (p.ej. Supabase).
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+- `SUPABASE_URL` – URL del proyecto.
+- `SUPABASE_ANON_KEY` – clave pública.
+- `SUPABASE_SERVICE_ROLE_KEY` – clave de servicio con permisos elevados.
+- `OPENAI_API_KEY` – clave para las funciones de IA (opcional).
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+## Contribución
 
-# Step 3: Install the necessary dependencies.
-npm i
+1. Haz un fork del repositorio y crea una rama para tu cambio.
+2. Ejecuta `npm run lint` antes de abrir el Pull Request.
+3. Describe claramente los cambios y añade pruebas si aplica.
+4. Abre un Pull Request hacia `main`.
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
+## Despliegue
 
-**Edit a file directly in GitHub**
+1. Ejecuta `npm run build` para generar la versión de producción.
+2. Publica el contenido de `dist/` en tu servicio de hosting estático (Vercel, Netlify, etc.).
+3. Para las funciones de Supabase usa la CLI: `supabase functions deploy <nombre>` y define las variables de entorno en el panel de Supabase.
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
-
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with:
+## Tecnologías
 
 - Vite
 - TypeScript
 - React
 - shadcn-ui
 - Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/e0802b34-adfc-496a-ae0e-230f4b7640fd) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
-
-## Landing page and app deployment
-
-This repository now includes a simple marketing landing page located in `landing/`. The Vite configuration builds both the landing and the main application. Deploy the contents of `dist/landing` to your main domain and serve the app from `/app` or `app.yourdomain.com`.
