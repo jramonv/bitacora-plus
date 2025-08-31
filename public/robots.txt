@@ -13,4 +13,4 @@ Allow: /
 User-agent: *
 Allow: /
 
-Sitemap: https://<tu-dominio>/sitemap.xml
+Sitemap: https://bitacora.plus/sitemap.xml

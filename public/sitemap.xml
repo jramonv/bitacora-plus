@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>https://<tu-dominio>/</loc></url>
-  <url><loc>https://<tu-dominio>/dashboard</loc></url>
-  <url><loc>https://<tu-dominio>/subjects</loc></url>
+  <url><loc>https://bitacora.plus/login</loc></url>
+  <url><loc>https://bitacora.plus/</loc></url>
+  <url><loc>https://bitacora.plus/dashboard</loc></url>
+  <url><loc>https://bitacora.plus/subjects</loc></url>
 </urlset>
