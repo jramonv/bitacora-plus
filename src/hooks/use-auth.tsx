@@ -1,3 +1,4 @@
+// Authentication context and custom hook
 import { createContext, useContext, useEffect, useState } from 'react';
 import type { User } from '@supabase/supabase-js';
 import type { UserRole } from '@/types/database';

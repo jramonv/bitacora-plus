@@ -1,3 +1,4 @@
+// Authentication helpers for interacting with Supabase
 import { supabase } from './client';
 import type { UserRole } from '@/types/database';
 
