@@ -142,6 +142,11 @@ type Toast = Omit<ToasterToast, "id">
 function toast({ ...props }: Toast) {
   const id = genId()
 
+  const previouslyFocused =
+    typeof document !== "undefined"
+      ? (document.activeElement as HTMLElement | null)
+      : null
+
   const update = (props: ToasterToast) =>
     dispatch({
       type: "UPDATE_TOAST",
@@ -160,6 +165,12 @@ function toast({ ...props }: Toast) {
       },
     },
   })
+
+  // Ensure that triggering a toast does not steal focus from the currently
+  // focused element. Re-focus after the toast has been dispatched.
+  if (previouslyFocused) {
+    setTimeout(() => previouslyFocused.focus(), 0)
+  }
 
   return {
     id: id,

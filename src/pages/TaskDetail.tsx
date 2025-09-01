@@ -12,12 +12,13 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
-import { CalendarIcon, Clock, Upload, FileText, Download, Lock, CheckCircle, AlertTriangle, MapPin, Signature } from "lucide-react";
+import { CalendarIcon, Clock, Upload, FileText, Download, Lock, CheckCircle, AlertTriangle, MapPin, Signature, FileDown } from "lucide-react";
 import Layout from "@/components/Layout";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
 import { TaskStatus, RequiredEvidence, castRequiredEvidence } from "@/types/database";
+import { EvidenceUpload } from "@/components/EvidenceUpload";
 
 const TaskDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -109,7 +110,14 @@ const TaskDetail = () => {
   // Close task mutation
   const closeTaskMutation = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase
+      // First validate the task can be closed
+      const validation = validateTaskClosure();
+      if (!validation.canClose) {
+        throw new Error(validation.errors.join('; '));
+      }
+
+      // Update task status
+      const { error: taskError } = await supabase
         .from('tasks')
         .update({ 
           status: 'completed' as TaskStatus,
@@ -117,13 +125,38 @@ const TaskDetail = () => {
         })
         .eq('id', id);
       
-      if (error) throw error;
+      if (taskError) throw taskError;
+
+      // Create log entry for status change
+      const { error: logError } = await supabase
+        .from('log_entries')
+        .insert({
+          tenant_id: task?.tenant_id,
+          subject_id: task?.subject_id,
+          task_id: id,
+          event_type: 'status_change',
+          message: 'Task cerrada exitosamente',
+          metadata: {
+            previousValue: task?.status,
+            newValue: 'completed',
+            userId: 'current_user' // This should be the actual user ID
+          }
+        });
+
+      if (logError) throw logError;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['task', id] });
       toast({
         title: "Task cerrada",
         description: "La task se cerró exitosamente.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "No se puede cerrar la task",
+        description: error.message,
+        variant: "destructive",
       });
     }
   });
@@ -144,33 +177,69 @@ const TaskDetail = () => {
   };
 
   const handleClose = () => {
+    const validation = validateTaskClosure();
+    if (!validation.canClose) {
+      validation.errors.forEach(error => {
+        toast({
+          title: "Requisitos faltantes",
+          description: error,
+          variant: "destructive",
+        });
+      });
+      return;
+    }
     closeTaskMutation.mutate();
   };
 
-  const canClose = () => {
-    if (!task) return false;
+  const validateTaskClosure = () => {
+    if (!task) return { canClose: false, errors: ['Task no encontrada'] };
     
+    const errors: string[] = [];
     const evidence = task.evidence || [];
     const required = castRequiredEvidence(task.required_evidence);
     
-    // Check minimum photos
+    // 1. Check minimum photos
     const photoCount = evidence.filter(e => e.kind === 'photo').length;
     const minPhotos = required.min_photos || 3;
-    if (photoCount < minPhotos) return false;
+    if (photoCount < minPhotos) {
+      errors.push(`Faltan ${minPhotos - photoCount} fotos (${photoCount}/${minPhotos})`);
+    }
     
-    // Check geotag requirement
+    // 2. Check geotag requirement
     if (required.geotag_required) {
       const hasGeotag = evidence.some(e => e.latitude && e.longitude);
-      if (!hasGeotag) return false;
+      if (!hasGeotag) {
+        errors.push('Se requiere al menos una evidencia con geolocalización');
+      }
     }
     
-    // Check signature requirement  
+    // 3. Check signature requirement  
     if (required.signature_required) {
       const hasSignature = evidence.some(e => e.kind === 'pdf');
-      if (!hasSignature) return false;
+      if (!hasSignature) {
+        errors.push('Se requiere firma o documento firmado (PDF)');
+      }
     }
     
-    return true;
+    // 4. Check checklist requirement
+    if (required.checklist_id && task.checklist_runs && task.checklist_runs.length > 0) {
+      const checklistRun = task.checklist_runs[0];
+      if (!checklistRun.completed_at) {
+        errors.push('Debe completar el checklist antes de cerrar');
+      }
+      // Check score if available
+      const result = checklistRun.result as any;
+      if (result && typeof result.score === 'number' && result.score < 0) {
+        errors.push('El checklist debe tener una puntuación válida');
+      }
+    }
+    
+    return { canClose: errors.length === 0, errors };
+  };
+
+  const canClose = () => {
+    const validation = validateTaskClosure();
+    return validation.canClose;
   };
 
   const getStatusBadge = (status: string) => {
@@ -186,8 +255,51 @@ const TaskDetail = () => {
   };
 
   const exportToPDF = async () => {
-    // TODO: Implement PDF export functionality
-    console.log('Exporting task to PDF...');
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast({
+          title: "Error",
+          description: "Debe iniciar sesión para exportar PDF",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const response = await fetch(`https://eeprxrlmcbtywuuwnuex.supabase.co/functions/v1/export-task-pdf/${id}.pdf`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Error al generar PDF');
+      }
+
+      // Download the PDF
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `task-${id}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+
+      toast({
+        title: "PDF exportado",
+        description: "El archivo se descargó correctamente",
+      });
+    } catch (error) {
+      console.error('Error exporting PDF:', error);
+      toast({
+        title: "Error",
+        description: "No se pudo exportar el PDF",
+        variant: "destructive",
+      });
+    }
   };
 
   if (isLoading) {
@@ -499,20 +611,16 @@ const TaskDetail = () => {
                 <CardTitle>Evidencias</CardTitle>
               </CardHeader>
               <CardContent>
-                {task.status !== 'completed' && (
-                  <div className="border-2 border-dashed border-muted rounded-lg p-8 text-center mb-4">
-                    <Upload className="mx-auto h-8 w-8 text-muted-foreground mb-2" />
-                    <p className="text-sm text-muted-foreground">
-                      Arrastra archivos aquí o haz clic para subir
-                    </p>
-                    <Button variant="outline" className="mt-2">
-                      Seleccionar Archivos
-                    </Button>
-                  </div>
-                )}
+                <EvidenceUpload
+                  taskId={id!}
+                  tenantId={task.tenant_id}
+                  subjectId={task.subject_id}
+                  onUploadComplete={() => queryClient.invalidateQueries({ queryKey: ['task', id] })}
+                  disabled={task.status === 'completed'}
+                />
 
                 {/* Evidence List */}
-                <div className="space-y-2">
+                <div className="space-y-2 mt-4">
                   {evidence.length === 0 ? (
                     <p className="text-center py-4 text-muted-foreground">
                       No hay evidencias subidas

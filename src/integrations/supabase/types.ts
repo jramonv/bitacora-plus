@@ -224,6 +224,42 @@ export type Database = {
           },
         ]
       }
+      api_audit_logs: {
+        Row: {
+          api_key_id: string | null
+          created_at: string | null
+          id: string
+          latency_ms: number | null
+          method: string
+          path: string
+          status: number
+          tenant_id: string
+          user_id: string | null
+        }
+        Insert: {
+          api_key_id?: string | null
+          created_at?: string | null
+          id?: string
+          latency_ms?: number | null
+          method: string
+          path: string
+          status: number
+          tenant_id: string
+          user_id?: string | null
+        }
+        Update: {
+          api_key_id?: string | null
+          created_at?: string | null
+          id?: string
+          latency_ms?: number | null
+          method?: string
+          path?: string
+          status?: number
+          tenant_id?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       api_keys: {
         Row: {
           active: boolean
@@ -261,6 +297,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      automations: {
+        Row: {
+          action_spec: Json
+          action_type: string
+          active: boolean | null
+          created_at: string | null
+          id: string
+          name: string
+          tenant_id: string
+          trigger_spec: Json
+          trigger_type: string
+        }
+        Insert: {
+          action_spec?: Json
+          action_type: string
+          active?: boolean | null
+          created_at?: string | null
+          id?: string
+          name: string
+          tenant_id: string
+          trigger_spec?: Json
+          trigger_type: string
+        }
+        Update: {
+          action_spec?: Json
+          action_type?: string
+          active?: boolean | null
+          created_at?: string | null
+          id?: string
+          name?: string
+          tenant_id?: string
+          trigger_spec?: Json
+          trigger_type?: string
+        }
+        Relationships: []
       }
       checklist_runs: {
         Row: {
@@ -362,6 +434,39 @@ export type Database = {
           },
         ]
       }
+      event_outbox: {
+        Row: {
+          attempts: number | null
+          created_at: string | null
+          event_type: string
+          id: string
+          next_attempt_at: string | null
+          payload: Json
+          status: string | null
+          tenant_id: string
+        }
+        Insert: {
+          attempts?: number | null
+          created_at?: string | null
+          event_type: string
+          id?: string
+          next_attempt_at?: string | null
+          payload: Json
+          status?: string | null
+          tenant_id: string
+        }
+        Update: {
+          attempts?: number | null
+          created_at?: string | null
+          event_type?: string
+          id?: string
+          next_attempt_at?: string | null
+          payload?: Json
+          status?: string | null
+          tenant_id?: string
+        }
+        Relationships: []
+      }
       evidence: {
         Row: {
           checksum: string | null
@@ -374,6 +479,7 @@ export type Database = {
           latitude: number | null
           longitude: number | null
           metadata: Json | null
+          ocr_text: string | null
           task_id: string
           tenant_id: string
         }
@@ -388,6 +494,7 @@ export type Database = {
           latitude?: number | null
           longitude?: number | null
           metadata?: Json | null
+          ocr_text?: string | null
           task_id: string
           tenant_id: string
         }
@@ -402,6 +509,7 @@ export type Database = {
           latitude?: number | null
           longitude?: number | null
           metadata?: Json | null
+          ocr_text?: string | null
           task_id?: string
           tenant_id?: string
         }
@@ -734,30 +842,177 @@ export type Database = {
           created_at: string | null
           id: string
           name: string
+          settings: Json | null
           updated_at: string | null
         }
         Insert: {
           created_at?: string | null
           id?: string
           name: string
+          settings?: Json | null
           updated_at?: string | null
         }
         Update: {
           created_at?: string | null
           id?: string
           name?: string
+          settings?: Json | null
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      webhook_delivery_logs: {
+        Row: {
+          created_at: string | null
+          error: string | null
+          http_code: number | null
+          id: string
+          latency_ms: number | null
+          status: string
+          subscription_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          error?: string | null
+          http_code?: number | null
+          id?: string
+          latency_ms?: number | null
+          status: string
+          subscription_id: string
+        }
+        Update: {
+          created_at?: string | null
+          error?: string | null
+          http_code?: number | null
+          id?: string
+          latency_ms?: number | null
+          status?: string
+          subscription_id?: string
+        }
+        Relationships: []
+      }
+      webhook_subscriptions: {
+        Row: {
+          active: boolean | null
+          created_at: string | null
+          events: string[]
+          id: string
+          secret: string
+          tenant_id: string
+          url: string
+        }
+        Insert: {
+          active?: boolean | null
+          created_at?: string | null
+          events?: string[]
+          id?: string
+          secret: string
+          tenant_id: string
+          url: string
+        }
+        Update: {
+          active?: boolean | null
+          created_at?: string | null
+          events?: string[]
+          id?: string
+          secret?: string
+          tenant_id?: string
+          url?: string
         }
         Relationships: []
       }
     }
     Views: {
-      [_ in never]: never
+      v_ai_queue_effective: {
+        Row: {
+          cost_usd: number | null
+          created_at: string | null
+          error: string | null
+          finished_at: string | null
+          id: string | null
+          input_ref: Json | null
+          job_type: Database["public"]["Enums"]["ai_job_type"] | null
+          model: string | null
+          output_ref: string | null
+          started_at: string | null
+          status: Database["public"]["Enums"]["ai_job_status"] | null
+          subject_id: string | null
+          task_id: string | null
+          tenant_id: string | null
+          tokens_in: number | null
+          tokens_out: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_jobs_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "subjects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_jobs_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_jobs_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
+      cleanup_old_idempotency_keys: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
       current_tenant_id: {
         Args: Record<PropertyKey, never>
         Returns: string
+      }
+      get_ai_jobs_for_processing: {
+        Args: { batch_size?: number }
+        Returns: {
+          attempts: number
+          id: string
+          input_ref: Json
+          job_type: string
+          subject_id: string
+          task_id: string
+          tenant_id: string
+        }[]
+      }
+      issue_api_key: {
+        Args: { p_name: string; p_tenant_id: string }
+        Returns: {
+          api_key: string
+          key_id: string
+        }[]
+      }
+      redact_pii: {
+        Args: { input_text: string }
+        Returns: string
+      }
+      revoke_api_key: {
+        Args: { p_key_id: string }
+        Returns: boolean
+      }
+      trigger_ai_dispatcher: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
+      verify_api_key: {
+        Args: { p_api_key: string }
+        Returns: {
+          key_id: string
+          tenant_id: string
+        }[]
       }
     }
     Enums: {
