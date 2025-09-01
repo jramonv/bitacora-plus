@@ -175,7 +175,23 @@ export class BitacoraClient {
       throw new Error(`${error.title}: ${error.detail}`);
     }
 
-    return response.json();
+    // Handle empty responses (e.g., 204 No Content)
+    const contentLength = response.headers.get('Content-Length');
+    if (response.status === 204 || contentLength === '0') {
+      return null as unknown as T;
+    }
+
+    const contentType = response.headers.get('Content-Type') || '';
+    if (contentType.includes('application/json')) {
+      return response.json();
+    }
+
+    if (contentType.startsWith('text/')) {
+      return response.text() as unknown as T;
+    }
+
+    // Unsupported content type
+    throw new Error(`Unsupported response type: ${contentType || 'unknown'}`);
   }
 
   // Subjects API
