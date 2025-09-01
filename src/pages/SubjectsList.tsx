@@ -19,6 +19,8 @@ import { SubjectStatus } from "@/types/database";
 
 import { Subject, Task } from "@/types/entities";
 
+import { EmptyState } from "@/components/EmptyState";
+
 const SubjectsList = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | SubjectStatus>("all");
@@ -26,11 +28,11 @@ const SubjectsList = () => {
   const [dateTo, setDateTo] = useState<Date>();
 
   // Fetch subjects with filters
-  const { data: subjects, isLoading } = useQuery<Subject[]>({
+  const { data: subjects = [], isLoading } = useQuery({
     queryKey: ['subjects', searchTerm, statusFilter, dateFrom, dateTo],
     queryFn: async () => {
       let query = supabase
-        .from<Subject>('subjects')
+        .from('subjects')
         .select(`
           id,
           title,
@@ -52,7 +54,7 @@ const SubjectsList = () => {
       }
 
       if (statusFilter !== 'all') {
-        query = query.eq('status', statusFilter);
+        query = query.eq('status', statusFilter as any);
       }
 
       if (dateFrom) {

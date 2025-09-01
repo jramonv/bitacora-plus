@@ -126,7 +126,7 @@ export const EvidenceUpload = ({ taskId, tenantId, subjectId, onUploadComplete, 
           kind: getEvidenceKind(file),
           latitude,
           longitude,
-          metadata,
+          metadata: metadata as any,
           checksum
         });
 

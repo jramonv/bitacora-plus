@@ -21,11 +21,11 @@ const SubjectDetail = () => {
   const { toast } = useToast();
 
   // Fetch subject details
-  const { data: subject, isLoading } = useQuery<Subject>({
+  const { data: subject, isLoading } = useQuery({
     queryKey: ['subject', id],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from<Subject>('subjects')
+        .from('subjects')
         .select(`
           *,
           tasks (
@@ -50,17 +50,17 @@ const SubjectDetail = () => {
         .single();
       
       if (error) throw error;
-      return data as Subject;
+      return data as unknown as Subject;
     },
     enabled: !!id
   });
 
   // Fetch evidence for this subject
-  const { data: evidence } = useQuery<Evidence[]>({
+  const { data: evidence } = useQuery({
     queryKey: ['subject-evidence', id],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from<Evidence>('evidence')
+        .from('evidence')
         .select(`
           id,
           filename,
@@ -76,7 +76,7 @@ const SubjectDetail = () => {
         .in('task_id', subject?.tasks?.map((t: Task) => t.id) || []);
       
       if (error) throw error;
-      return data;
+      return data as Evidence[];
     },
     enabled: !!subject?.tasks
   });
@@ -385,9 +385,9 @@ const SubjectDetail = () => {
                           )}
                         </div>
                         <p className="text-sm font-medium truncate">{item.filename}</p>
-                        <p className="text-xs text-muted-foreground">
-                          Task: {item.tasks?.title || 'Sin task'}
-                        </p>
+                         <p className="text-xs text-muted-foreground">
+                           Evidencia #{item.id}
+                         </p>
                         <p className="text-xs text-muted-foreground">
                           {format(new Date(item.created_at), 'dd/MM/yyyy', { locale: es })}
                         </p>

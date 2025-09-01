@@ -22,7 +22,6 @@ import { TaskStatus, RequiredEvidence, castRequiredEvidence } from "@/types/data
 import { EvidenceUpload } from "@/components/EvidenceUpload";
 
 import { Task, LogEntry } from "@/types/entities";
-=
 import { EmptyState } from "@/components/EmptyState";
 
 
@@ -35,11 +34,11 @@ const TaskDetail = () => {
   const [formData, setFormData] = useState<Partial<Task> & { due_date?: Date | null }>({});
 
   // Fetch task details
-  const { data: task, isLoading } = useQuery<Task>({
+  const { data: task, isLoading } = useQuery({
     queryKey: ['task', id],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from<Task>('tasks')
+        .from('tasks')
         .select(`
           *,
           subjects (
@@ -76,21 +75,20 @@ const TaskDetail = () => {
       setFormData({
         title: data.title,
         description: data.description,
-        due_date: data.due_date ? new Date(data.due_date) : null,
+        due_date: data.due_date ? new Date(data.due_date) as any : null,
         assigned_to: data.assigned_to,
-        required_evidence: data.required_evidence || {}
+        required_evidence: data.required_evidence as any || {}
       });
 
-      return data as Task;
+      return data as unknown as Task;
     },
     enabled: !!id
   });
 
-  // Update task mutation
-  const updateTaskMutation = useMutation<void, Error, Partial<Task>>({
-    mutationFn: async (updateData: Partial<Task>) => {
+  const updateTaskMutation = useMutation({
+    mutationFn: async (updateData: any) => {
       const { error } = await supabase
-        .from<Task>('tasks')
+        .from('tasks')
         .update(updateData)
         .eq('id', id);
       
@@ -124,7 +122,7 @@ const TaskDetail = () => {
 
       // Update task status
       const { error: taskError } = await supabase
-        .from<Task>('tasks')
+        .from('tasks')
         .update({
           status: 'completed' as TaskStatus,
           completed_at: new Date().toISOString()
@@ -135,7 +133,7 @@ const TaskDetail = () => {
 
       // Create log entry for status change
       const { error: logError } = await supabase
-        .from<LogEntry>('log_entries')
+        .from('log_entries')
         .insert({
           tenant_id: task?.tenant_id,
           subject_id: task?.subject_id,
@@ -168,11 +166,11 @@ const TaskDetail = () => {
   });
 
   const handleSave = () => {
-    const updateData: Partial<Task> = {
+    const updateData: Partial<any> = {
       title: formData.title,
       description: formData.description,
       assigned_to: formData.assigned_to,
-      required_evidence: formData.required_evidence
+      required_evidence: formData.required_evidence as any
     };
 
     if (formData.due_date) {
@@ -421,14 +419,14 @@ const TaskDetail = () => {
                           )}
                         >
                           <CalendarIcon className="mr-2 h-4 w-4" />
-                          {formData.due_date ? format(formData.due_date, "dd/MM/yyyy", { locale: es }) : "Seleccionar fecha"}
+                          {formData.due_date ? format(formData.due_date as Date, "dd/MM/yyyy", { locale: es }) : "Seleccionar fecha"}
                         </Button>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0">
                         <Calendar
                           mode="single"
-                          selected={formData.due_date}
-                          onSelect={(date) => setFormData({ ...formData, due_date: date })}
+          selected={formData.due_date as Date}
+          onSelect={(date) => setFormData({ ...formData, due_date: date as any })}
                           initialFocus
                           className="p-3 pointer-events-auto"
                         />
@@ -473,12 +471,12 @@ const TaskDetail = () => {
                     <label className="text-sm">Geotag requerido</label>
                     {isEditing ? (
                       <Checkbox
-                        checked={castRequiredEvidence(formData.required_evidence).geotag_required || false}
+                        checked={Boolean(castRequiredEvidence(formData.required_evidence).geotag_required)}
                         onCheckedChange={(checked) => setFormData({ 
                           ...formData, 
                           required_evidence: { 
                             ...formData.required_evidence, 
-                            geotag_required: checked 
+                            geotag_required: checked as boolean 
                           }
                         })}
                       />
@@ -492,12 +490,12 @@ const TaskDetail = () => {
                     <label className="text-sm">Firma requerida</label>
                     {isEditing ? (
                       <Checkbox
-                        checked={castRequiredEvidence(formData.required_evidence).signature_required || false}
+                        checked={Boolean(castRequiredEvidence(formData.required_evidence).signature_required)}
                         onCheckedChange={(checked) => setFormData({ 
                           ...formData, 
                           required_evidence: { 
                             ...formData.required_evidence, 
-                            signature_required: checked 
+                            signature_required: checked as boolean 
                           }
                         })}
                       />
@@ -613,7 +611,7 @@ const TaskDetail = () => {
                       icon={FileText}
                       message="No hay evidencias subidas"
                       action={
-                        <Button onClick={() => document.querySelector('input[type="file"]')?.click()}>
+                       <Button onClick={() => (document.querySelector('input[type="file"]') as HTMLInputElement)?.click()}>
                           Subir evidencia
                         </Button>
                       }

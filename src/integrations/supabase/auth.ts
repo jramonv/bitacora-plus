@@ -13,7 +13,12 @@ export async function signUp(email: string, password: string, role: UserRole) {
   if (error) throw error;
   const user = data.user;
   if (user) {
-    await supabase.from('profiles').upsert({ user_id: user.id, email, role });
+    await supabase.from('profiles').upsert({ 
+      user_id: user.id, 
+      email, 
+      role,
+      tenant_id: crypto.randomUUID() // Create a new tenant for new users
+    });
   }
   return data;
 }
