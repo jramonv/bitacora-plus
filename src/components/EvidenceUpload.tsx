@@ -98,21 +98,59 @@ export const EvidenceUpload = ({ taskId, tenantId, subjectId, onUploadComplete, 
         checksum
       };
 
-      // Try to extract GPS data from EXIF (basic implementation)
+      // Try to extract GPS data from EXIF metadata
       let latitude: number | null = null;
       let longitude: number | null = null;
-      
-      if (file.type.startsWith('image/') && navigator.geolocation) {
-        // For now, we'll use current location if available
+
+      if (file.type.startsWith('image/')) {
         try {
-          const position = await new Promise<GeolocationPosition>((resolve, reject) => {
-            navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 5000 });
-          });
-          latitude = position.coords.latitude;
-          longitude = position.coords.longitude;
+          // @ts-expect-error - exifr may not be installed in all environments
+          const exifr = await import('exifr');
+          const gps = await (exifr.gps || exifr.default?.gps)?.(file);
+          if (gps?.latitude && gps?.longitude) {
+            latitude = gps.latitude;
+            longitude = gps.longitude;
+          }
         } catch (error) {
-          // Geolocation failed or was denied
+          // EXIF parsing failed or library not available
         }
+      }
+
+      // If no GPS data, prompt the user for location
+      if (latitude === null || longitude === null) {
+        let useCurrent = false;
+        if (navigator.geolocation) {
+          useCurrent = window.confirm('La foto no contiene geotag. ¿Usar tu ubicación actual?');
+          if (useCurrent) {
+            try {
+              const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+                navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 5000 });
+              });
+              latitude = position.coords.latitude;
+              longitude = position.coords.longitude;
+            } catch (error) {
+              // Geolocation failed or was denied
+            }
+          }
+        }
+
+        if (latitude === null || longitude === null) {
+          const manual = window.prompt('Ingresa coordenadas como "lat,lng" o deja vacío para continuar sin geotag');
+          if (manual) {
+            const [latStr, lngStr] = manual.split(',').map(s => s.trim());
+            const lat = parseFloat(latStr);
+            const lng = parseFloat(lngStr);
+            if (!isNaN(lat) && !isNaN(lng)) {
+              latitude = lat;
+              longitude = lng;
+            }
+          }
+        }
+      }
+
+      const ai_flags: string[] = [];
+      if (latitude === null || longitude === null) {
+        ai_flags.push('missing_geotag');
       }
 
       // Save evidence record
@@ -127,7 +165,8 @@ export const EvidenceUpload = ({ taskId, tenantId, subjectId, onUploadComplete, 
           latitude,
           longitude,
           metadata,
-          checksum
+          checksum,
+          ai_flags
         });
 
       if (dbError) throw dbError;
