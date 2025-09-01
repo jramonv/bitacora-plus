@@ -80,14 +80,22 @@ const Dashboard = () => {
 
   const getStatusBadge = (status: TaskStatus | string) => {
     const variants = {
-      'pending': { variant: 'secondary' as const, label: 'Pendiente' },
-      'in_progress': { variant: 'default' as const, label: 'En Progreso' },
-      'completed': { variant: 'default' as const, label: 'Completada' },
-      'blocked': { variant: 'destructive' as const, label: 'Bloqueada' }
+      pending: { variant: 'secondary' as const, label: 'Pendiente' },
+      in_progress: {
+        variant: 'outline' as const,
+        label: 'En Progreso',
+        className: 'bg-yellow-500 text-white hover:bg-yellow-600'
+      },
+      completed: {
+        variant: 'outline' as const,
+        label: 'Completada',
+        className: 'bg-green-500 text-white hover:bg-green-600'
+      },
+      blocked: { variant: 'destructive' as const, label: 'Bloqueada' }
     };
-    
+
     const config = variants[status as keyof typeof variants] || variants.pending;
-    return <Badge variant={config.variant}>{config.label}</Badge>;
+    return <Badge variant={config.variant} className={config.className}>{config.label}</Badge>;
   };
 
   const getRiskLevel = (task: any) => {
